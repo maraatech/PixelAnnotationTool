@@ -5,6 +5,7 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <iostream>
 #include <QImage>
 
 cv::Mat qImage2Mat(QImage const& src);
@@ -21,5 +22,6 @@ QImage removeBorder(const QImage & mask_id, const Id2Labels & labels, cv::Size w
 bool isFullZero(const QImage& image);
 int rgbToInt(uchar r, uchar g, uchar b);
 void intToRgb(int value, uchar &r, uchar &g, uchar &b);
-
+unsigned char random_char();
+std::string generate_hex(const unsigned int len);
 #endif

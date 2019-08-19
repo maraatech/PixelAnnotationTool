@@ -185,3 +185,39 @@ bool isFullZero(const QImage& image) {
 	return true;
 }
 //-------------------------------------------------------------------------------------------------------------
+
+QImage floodfill(const QImage& qimage, const QImage & qmarkers_mask, cv::Point point) {
+	cv::Mat image = qImage2Mat(qimage);
+	cv::Mat markers_mask = qImage2Mat(qmarkers_mask);
+	cv::Mat markers = cv::Mat::zeros(markers_mask.size(), CV_32S);
+    cv::Mat new_mask = convertMat32StoRGBC3(markers);
+	return mat2QImage(new_mask);
+}
+
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <random>
+#include <climits>
+#include <algorithm>
+#include <functional>
+#include <string>
+
+unsigned char random_char() {
+    std::random_device rd;
+    std::mt19937 gen(rd()); 
+    std::uniform_int_distribution<> dis(0, 255);
+    return static_cast<unsigned char>(dis(gen));
+}
+
+std::string generate_hex(const unsigned int len) {
+    std::stringstream ss;
+    for(auto i = 0; i < len; i++) {
+        auto rc = random_char();
+        std::stringstream hexstream;
+        hexstream << std::hex << int(rc);
+        auto hex = hexstream.str(); 
+        ss << (hex.length() < 2 ? '0' + hex : hex);
+    }        
+    return ss.str();
+}

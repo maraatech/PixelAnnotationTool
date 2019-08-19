@@ -51,6 +51,7 @@ find_path(Qt5Widgets_DIR Qt5WidgetsConfig.cmake PATHS "${QT5_DIR}/Qt5Widgets" )
 find_path(Qt5Gui_DIR Qt5GuiConfig.cmake         PATHS "${QT5_DIR}/Qt5Gui"     )
 	
 find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Xml REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(OpenCV REQUIRED)
 
@@ -58,23 +59,25 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${OpenCV_INCLUDE_DIRS})
 
 qt5_wrap_ui(UI_TEST_HDRS src/main_window.ui )
 add_executable(PixelAnnotationTool MACOSX_BUNDLE WIN32
-	src/main_window.cpp
+    src/boundingbox.h
+    src/boundingbox.cpp
 	src/main_window.h
-	src/about_dialog.cpp
+	src/main_window.cpp
 	src/about_dialog.h
-	src/labels.cpp 
+	src/about_dialog.cpp
 	src/labels.h
-	src/utils.cpp
+	src/labels.cpp 
 	src/utils.h
-	src/image_mask.cpp
+	src/utils.cpp
 	src/image_mask.h
-	src/image_canvas.cpp 
+	src/image_mask.cpp
 	src/image_canvas.h
-	src/label_widget.cpp 
+	src/image_canvas.cpp 
 	src/label_widget.h 
+	src/label_widget.cpp 
 	src/main.cpp 
 	${UI_TEST_HDRS})
-target_link_libraries(PixelAnnotationTool Qt5::Gui Qt5::Widgets ${OpenCV_LIBS})	
+target_link_libraries(PixelAnnotationTool Qt5::Gui Qt5::Widgets ${OpenCV_LIBS} Qt5::Xml)	
 add_custom_command(TARGET PixelAnnotationTool PRE_BUILD COMMAND cmake -P ${CMAKE_BINARY_DIR}/git_version.cmake)
 
 set(OpenCV_BIN ${OpenCV_LIB_PATH}/../bin)

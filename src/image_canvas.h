@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include "image_mask.h"
+#include "boundingbox.h"
 
 #include <QLabel>
 #include <QPen>
@@ -31,6 +32,13 @@ public:
 	void loadImage(const QString &file);
 	QScrollArea * getScrollParent() const { return _scroll_parent; }
     bool isNotSaved() const { return _undo_list.size() > 1; }
+    void redrawBoundingBox(int except_index =-1);
+    int getSelectedBox();
+    void reset(int operation=DRAW_MODE);
+    void drawMarkedBoundingBox(BoundingBox b);
+    void drawBoundingBox(BoundingBox b);
+    std::string getObjectString();
+    void saveAnnotation();
 
 protected:
 	void mouseMoveEvent(QMouseEvent * event) override;
@@ -54,11 +62,19 @@ private:
 	
 	void _initPixmap();
 	void _drawFillCircle(QMouseEvent * e);
+    void _fill(QMouseEvent * e);
+    void _startMarkingBoundingBox(QMouseEvent *e);
+    void _drawBoundingBox(QMouseEvent *e);
+    cv::Point getXYonImage(QMouseEvent *e);
+    cv::Point getXYonImage(int x_gui, int y_gui);
+    void parseXML(QString file_name);
 
 	QScrollArea     *_scroll_parent    ;
 	double           _scale            ;
 	double           _alpha            ;
 	QImage           _image            ;
+	QImage           _orig_image       ;
+	QImage           _buffer_image     ;
 	ImageMask        _mask             ;
 	ImageMask        _watershed        ;
 	QList<ImageMask> _undo_list        ;
@@ -68,10 +84,25 @@ private:
 	QString          _img_file         ;
 	QString          _mask_file        ;
 	QString          _watershed_file   ;
+    QString          _annotation_file  ;
 	ColorMask        _color            ;
 	int              _pen_size         ;
 	bool             _button_is_pressed;
-
+    int start_x;
+    int start_y;
+    std::vector<BoundingBox> box_list;
+    int _cid =-1;
+    
+    const int FILL_IN_MODIFIER = Qt::ShiftModifier;
+    const int BBOX_MODIFIER = Qt::ControlModifier;
+    
+    int _operation_mode;
+    static const int DRAW_MODE=0;
+    static const int BOX_SELECTED =1;
+    static const int BOX_MOVING =2;
+    static const int BOX_RESIZING =3;
+    static const int BOX_UNSELECTING = 4;
+    static const int BOX_CREATING = 5;
 };
 
 

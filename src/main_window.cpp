@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     paste_mask_action = new QAction(tr("&Paste Mask"), this);
     clear_mask_action = new QAction(tr("&Clear Mask mask"), this);
     close_tab_action = new QAction(tr("&Close current tab"), this);
+    open_dir_action = new QAction(tr("&Open directory"),this);
     swap_action = new QAction(tr("&Swap check box Watershed"), this);
 	undo_action = new QAction(tr("&Undo"), this);
 	redo_action = new QAction(tr("&Redo"), this);
@@ -41,10 +42,12 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     paste_mask_action->setShortcut(Qt::CTRL + Qt::Key_V);
     clear_mask_action->setShortcut(Qt::CTRL + Qt::Key_R);
     close_tab_action->setShortcut(Qt::CTRL + Qt::Key_W);
+    open_dir_action->setShortcut(Qt::CTRL + Qt::Key_O);
 	undo_action->setEnabled(false);
 	redo_action->setEnabled(false);
 
 	menuFile->addAction(save_action);
+    menuFile->addAction(open_dir_action);
     menuEdit->addAction(close_tab_action);
 	menuEdit->addAction(undo_action);
 	menuEdit->addAction(redo_action);
@@ -66,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 	connect(tabWidget             , SIGNAL(tabCloseRequested(int))            , this, SLOT(closeTab(int)   ));
 	connect(tabWidget             , SIGNAL(currentChanged(int))               , this, SLOT(updateConnect(int)));
     connect(tree_widget_img       , SIGNAL(itemClicked(QTreeWidgetItem *,int)), this, SLOT(treeWidgetClicked()));
+    connect(open_dir_action       , SIGNAL(triggered())                       , this, SLOT(on_actionOpenDir_triggered()));
     
 	labels = defaulfLabels();
 
@@ -220,7 +224,7 @@ void MainWindow::updateConnect(const ImageCanvas * ic) {
     connect(spinbox_scale, SIGNAL(valueChanged(double)), ic, SLOT(scaleChanged(double)));
     connect(spinbox_alpha, SIGNAL(valueChanged(double)), ic, SLOT(alphaChanged(double)));
     connect(spinbox_pen_size, SIGNAL(valueChanged(int)), ic, SLOT(setSizePen(int)));
-	connect(checkbox_watershed_mask, SIGNAL(clicked()), ic, SLOT(update()));
+	//connect(checkbox_watershed_mask, SIGNAL(clicked()), ic, SLOT(update()));
 	connect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
 	connect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
 	connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
@@ -235,7 +239,7 @@ void MainWindow::allDisconnnect(const ImageCanvas * ic) {
     disconnect(spinbox_scale, SIGNAL(valueChanged(double)), ic, SLOT(scaleChanged(double)));
     disconnect(spinbox_alpha, SIGNAL(valueChanged(double)), ic, SLOT(alphaChanged(double)));
     disconnect(spinbox_pen_size, SIGNAL(valueChanged(int)), ic, SLOT(setSizePen(int)));
-    disconnect(checkbox_watershed_mask, SIGNAL(clicked()), ic, SLOT(update()));
+    //disconnect(checkbox_watershed_mask, SIGNAL(clicked()), ic, SLOT(update()));
     disconnect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
     disconnect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
     disconnect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
@@ -435,7 +439,7 @@ ImageCanvas * MainWindow::getCurrentImageCanvas() {
 }
 
 void MainWindow::swapView() {
-    checkbox_watershed_mask->setCheckState(checkbox_watershed_mask->checkState() == Qt::CheckState::Checked ? Qt::CheckState::Unchecked : Qt::CheckState::Checked);
+    //checkbox_watershed_mask->setCheckState(checkbox_watershed_mask->checkState() == Qt::CheckState::Checked ? Qt::CheckState::Unchecked : Qt::CheckState::Checked);
     update();
 }
 

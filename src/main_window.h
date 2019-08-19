@@ -53,6 +53,7 @@ public:
 	QAction        * undo_action  ;
     QAction        * swap_action;
 	QAction        * redo_action  ;
+	QAction        * open_dir_action  ;
 	QString          curr_open_dir;
 public:
 	QString currentDir() const;
