@@ -25,6 +25,11 @@
 1. Run `win_make_vc14_x64_to_edit.bat`
 
 1. Run `make.bat`
+
+1. Move `scripts_to_build\build\x64\PixelAnnotationTool_x64_v1.3.2-6-XXXXXX` folder to a more accessible location and rename as desired
+
+1. Run PixelAnnotationTool.exe in above folder
+
 ## build and run on linux :
 
 On ubuntu, PixelAnnotationTool need this pacakage (OpenCV and Qt5.9.1): 
