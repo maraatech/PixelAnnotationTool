@@ -1,10 +1,30 @@
-## build on Microsoft Windows with visual studio vc14 2015:
+## build on Microsoft Windows:
 
-- Edit `win_make_vc14_x64_to_edit.bat` and modify : 
-    - QT5_DIR="/path/to/Qt/msvcXXX/lib/cmake"
-	- CMAKE_PREFIX_PATH="/path/to/OpenCV/build" the directory that points to the `OpenCVConfig.cmake` file
-- Run bat file.
+1. Install Visual Studio 2015 from [here](https://go.microsoft.com/fwlink/?LinkId=532606&clcid=0x409)
+	1. If performing a custom install be sure to check 
+		- Programing Languages > C++ 
+		- Windows and Web Development > Windows 8.1 and Windows Phone 8.0/8.1 tools >  Tools and Windows SDKs
+	
+1. Install Open CV [here](https://sourceforge.net/projects/opencvlibrary/files/opencv-win/)
+	1. Take note of the installation location, this will be needed later
+	1. Add \path\to\opencv\build\x64\vc14\bin to PATH
+	
+1. Install Qt [here](https://www.qt.io/download-qt-installer)
+	1. You will need to make a Qt account :(, but this can be done via the installer
+	1. Select Components
+		- Qt 5.13.0 > MSVC 2015 64-bit
+		
+1. Install Cmake [here](https://cmake.org/download/)
 
+1. Edit `win_make_vc14_x64_to_edit.bat` and modify : 
+	1. QT5_DIR="/path/to/Qt/msvcXXX/lib/cmake"
+	1. DCMAKE_PREFIX_PATH="/path/to/OpenCV/build;/path/to/Qt/5.13.0/msvc2015_64/lib/cmake/Qt5Xml"
+		1. The first path should point to the opencv build folder which contains `OpenCVConfig.cmake`
+		2. The second path should point to the Qt5Xml folder which contains `Qt5XmlConfigVersion.cmake`
+
+1. Run `win_make_vc14_x64_to_edit.bat`
+
+1. Run `make.bat`
 ## build and run on linux :
 
 On ubuntu, PixelAnnotationTool need this pacakage (OpenCV and Qt5.9.1): 
