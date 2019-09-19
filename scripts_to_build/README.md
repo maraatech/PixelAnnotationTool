@@ -33,6 +33,7 @@
 ## build and run on linux :
 
 On ubuntu, PixelAnnotationTool need this pacakage (OpenCV and Qt5.9.1): 
+1. Install Qt and OpenCV
 
 ```sh
 sudo apt-get install mesa-common-dev
@@ -42,14 +43,13 @@ chmod +x qt-opensource-linux-x64-5.9.1.run
 ./qt-opensource-linux-x64-5.9.1.run
 
 ```
-
-To compile the application : 
-
-```sh
-cd ..
-mkdir x64
-cd x64
-cmake -DQT5_DIR=/path/to/Qt5.9.1/5.9.1/gcc_64/lib/cmake -G "Unix Makefiles" ..
-make
-
+1. Install Cuda 8.0
 ```
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+sudo apt-get update
+sudo apt-get install cuda=8.0
+```
+1. Edit [build_linux.sh](https://github.com/maraatech/PixelAnnotationTool/blob/master/scripts_to_build/build_linux.sh)
+	1. Change -DQT5_DIR to correct QT directory
+	1. Change -DCUDA_TOOLKIT_ROOT_DIR to correct Cuda 8.0 directory IF REQUIRED
