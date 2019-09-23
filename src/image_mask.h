@@ -5,7 +5,7 @@
 #include "boundingbox.h"
 #include "utils.h"
 
-struct  ColorMask {
+struct ColorMask {
 	QColor id;
 	QColor color;
 };
@@ -19,11 +19,15 @@ struct ImageMask {
 	ImageMask(const QString &file, Id2Labels id_labels);
 	ImageMask(QSize s);
 
+    int loadSmartMaskFile(const QString &file);
+    int countInstances();
+    ColorMask getSmartMask(ColorMask cm, int instance_num);
 	void drawFillCircle(int x, int y, int pen_size, ColorMask cm);
 	void drawPixel(int x, int y, ColorMask cm);
 	void updateColor(const Id2Labels & labels);
 	void exchangeLabel(int x, int y, const Id2Labels & id_labels, ColorMask cm);
     void fill(int x, int y, ColorMask cm, const Id2Labels & id_labels);
+    void fill(int x, int y, ColorMask cm);
     void fillPolygon(cv::Mat& buffer, cv::Point point);
     void createBuffer();
     void destroyBuffer();

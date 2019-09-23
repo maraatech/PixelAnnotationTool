@@ -3,6 +3,7 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <QImage>
 
 typedef std::vector<cv::Point> PointList;
 
@@ -34,12 +35,16 @@ class BoundingBox{
         void printBoxParam();
         std::string toXML();
         std::string getId(){return _id;};
+
+        void setMaskColor(QColor color);
+        QColor getMaskColor();
     private:
         std::string _object_name;
         int _min_x, _min_y, _max_x, _max_y;
         bool _is_selected =false;    
         std::string _id;
         int selected_corner =-1;
+        QColor _mask_color = QColor(0, 0, 0);
 };
 
 #endif

@@ -26,7 +26,10 @@ public:
 	void write(QJsonObject &json) const;
 };
 
-class Id2Labels : public QMap<int,const LabelInfo*> { };
+class Id2Labels : public QMap<int,const LabelInfo*> { 
+public:
+	int getIdFromR(int red);
+};
 
 Id2Labels getId2Label(const Name2Labels& labels);
 Name2Labels defaulfLabels();

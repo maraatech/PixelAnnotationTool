@@ -29,6 +29,7 @@ ImageCanvas::ImageCanvas(MainWindow *ui) :
     _scroll_parent->setBackgroundRole(QPalette::Dark);
     _scroll_parent->setWidget(this);
     _operation_mode = DRAW_MODE;
+    _instance_num = 0;
 }
 
 ImageCanvas::~ImageCanvas() {
@@ -58,6 +59,7 @@ void ImageCanvas::loadImage(const QString &filename) {
     _orig_image = _image.copy();
 	
 	_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_mask.png";
+    _smart_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_smart_mask.png";
 	_watershed_file = file.dir().absolutePath()+ "/" + file.baseName() + "_watershed_mask.png";
     _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + ".xml";
     
@@ -66,6 +68,10 @@ void ImageCanvas::loadImage(const QString &filename) {
 	_undo_index = 0;
 	if (QFile(_mask_file).exists()) {
 		_mask = ImageMask(_mask_file,_ui->id_labels);
+        _smart_mask = ImageMask(_image.size());
+        _smart_mask.loadSmartMaskFile(_smart_mask_file);
+        _instance_num = _smart_mask.countInstances();
+        std::cout << "Found Unique Instances:" << _instance_num << std::endl;
         //_ui->runWatershed(this);// button_watershed->released());
 		_ui->checkbox_manuel_mask->setChecked(true);
 		_undo_list.push_back(_mask);
@@ -115,6 +121,43 @@ void ImageCanvas::parseXML(QString file_name){
     return;
 }
 
+void ImageCanvas::smartMask() {
+    std::cout << "Entering Smark Mask" << std::endl;
+    //TODO: Performance improvement, could just compare buffers to see if changes have been made
+    cv::Mat img = qImage2Mat(_smart_mask.color);
+
+    auto unique = findUniqueColors(_smart_mask.color);
+    unique.erase(QColor(0, 0, 0));
+    
+    int n = unique.size();
+    if (n > _instance_num) {
+        std::cout << "Updated instance number to " << n << std::endl;
+    }
+
+    _instance_num = n;
+
+    box_list.clear();
+
+    std::cout << "Found unique colors: " << n << std::endl;
+    for (auto c : unique)
+    {
+        std::cout << "R: " << c.red() << " G: " << c.green() << " B: " << c.blue() << std::endl;
+        int id = _ui->id_labels.getIdFromR(c.red());
+        auto label = _ui->id_labels[id]->name.toStdString();
+
+        std::cout << "Name: " << label << std::endl;
+
+        BoundingBox bbox = findBoundingBox(img, c, label);
+        bbox.printBoxParam();
+        bbox.setMaskColor(c);
+        box_list.push_back(bbox);
+        std::cout << "Added box to list" << std::endl;
+    }
+
+    redrawBoundingBox();
+}
+
+
 void ImageCanvas::saveMask() {
 	if (isFullZero(_mask.id))
 		return;
@@ -132,6 +175,7 @@ void ImageCanvas::saveMask() {
 //	}
     QString color_file = file.dir().absolutePath() + "/" + file.baseName() + "_color_mask.png";
     _mask.color.save(color_file);
+    _smart_mask.color.save(_smart_mask_file);
     saveAnnotation();
     _undo_list.clear();
     _undo_index = 0;
@@ -447,10 +491,13 @@ void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
 	cv::Point p = getXYonImage(e);
     int x = p.x;
     int y = p.y;
+
     if (_pen_size > 0) {
 		_mask.drawFillCircle(x, y, _pen_size, _color);
+        _smart_mask.drawFillCircle(x, y, _pen_size, _mask.getSmartMask(_color, _instance_num));
 	} else {
 		_mask.drawPixel(x, y, _color);
+        _smart_mask.drawPixel(x, y, _mask.getSmartMask(_color, _instance_num));
 	} 
 	update();
 }
@@ -460,6 +507,7 @@ void ImageCanvas::_fill(QMouseEvent *e){
     int x = p.x;
     int y = p.y;
     _mask.fill(x, y, _color,_ui->id_labels);
+    _smart_mask.fill(x, y, _mask.getSmartMask(_color, _instance_num));
 }
 
 void ImageCanvas::_startMarkingBoundingBox(QMouseEvent *e){
@@ -494,6 +542,7 @@ void ImageCanvas::redrawBoundingBox(int except_index){
 void ImageCanvas::clearMask() {
 	_mask = ImageMask(_image.size());
 	_watershed = ImageMask(_image.size());
+    _smart_mask = ImageMask(_image.size());
 	_undo_list.clear();
 	_undo_index = 0;
 	repaint();

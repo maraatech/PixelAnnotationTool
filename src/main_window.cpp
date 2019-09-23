@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 	setWindowTitle(QApplication::translate("MainWindow", "PixelAnnotationTool " PIXEL_ANNOTATION_TOOL_GIT_TAG, Q_NULLPTR));
 	list_label->setSpacing(1);
     image_canvas = NULL;
+    smart_mask_action = new QAction(tr("&Apply a smart mask to the current selection"), this);
 	save_action = new QAction(tr("&Save current image"), this);
     copy_mask_action = new QAction(tr("&Copy Mask"), this);
     paste_mask_action = new QAction(tr("&Paste Mask"), this);
@@ -34,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     swap_action = new QAction(tr("&Swap check box Watershed"), this);
 	undo_action = new QAction(tr("&Undo"), this);
 	redo_action = new QAction(tr("&Redo"), this);
+	smart_mask_action->setShortcut(Qt::Key_Space);
 	undo_action->setShortcuts(QKeySequence::Undo);
 	redo_action->setShortcuts(QKeySequence::Redo);
 	save_action->setShortcut(Qt::CTRL+Qt::Key_S);
@@ -45,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     open_dir_action->setShortcut(Qt::CTRL + Qt::Key_O);
 	undo_action->setEnabled(false);
 	redo_action->setEnabled(false);
+	smart_mask_action->setEnabled(true);
 
 	menuFile->addAction(save_action);
     menuFile->addAction(open_dir_action);
@@ -55,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     menuEdit->addAction(paste_mask_action);
     menuEdit->addAction(clear_mask_action);
     menuEdit->addAction(swap_action);
+    menuTool->addAction(smart_mask_action);
 
 	tabWidget->clear();
     
@@ -230,6 +234,7 @@ void MainWindow::updateConnect(const ImageCanvas * ic) {
 	connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
 	connect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
 	connect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
+	connect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
     connect(checkbox_border_ws, SIGNAL(clicked()), this, SLOT(runWatershed()));
     
 }
@@ -245,6 +250,7 @@ void MainWindow::allDisconnnect(const ImageCanvas * ic) {
     disconnect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
     disconnect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
     disconnect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
+    disconnect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
     disconnect(checkbox_border_ws, SIGNAL(clicked()), this, SLOT(runWatershed()));
 }
 

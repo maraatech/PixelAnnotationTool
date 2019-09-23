@@ -76,6 +76,21 @@ void Name2Labels::write(QJsonObject &json) const {
 }
 
 
+int Id2Labels::getIdFromR(int red) {
+	for (auto label : values())
+	{
+		int id = label->id;
+		QColor c = (*this)[id]->color;
+		if (c.red() == red)
+		{
+			return id;
+		}
+	}
+
+	return -1;
+}
+
+
 Id2Labels getId2Label(const Name2Labels& labels) {
 	Id2Labels id_labels;
 	QMapIterator<QString, LabelInfo> i(labels);

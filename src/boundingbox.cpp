@@ -177,6 +177,14 @@ cv::Point BoundingBox::getMaxMaxPoint(){
     return cv::Point(_max_x, _max_y);
 }
 
+QColor BoundingBox::getMaskColor() {
+    return _mask_color;
+}
+
+void BoundingBox::setMaskColor(QColor color) {
+    _mask_color = color;
+}
+
 void BoundingBox::printBoxParam(){
     std::cout<<"box parameters are"<<cv::Point(_min_x,_min_y)<<cv::Point(_max_x,_max_y)<<" width:"<<getWidth()<<" height"<<getHeight()<<std::endl;
 }
@@ -193,5 +201,8 @@ std::string BoundingBox::toXML(){
 			<xmax>"+std::to_string(_max_x)+"</xmax>\n\
 			<ymax>"+std::to_string(_max_y)+"</ymax>\n\
 		</bndbox>\n\
+        <mask_r>"+std::to_string(_mask_color.red())+"</mask_r>\n\
+        <mask_g>"+std::to_string(_mask_color.green())+"</mask_g>\n\
+        <mask_b>"+std::to_string(_mask_color.blue())+"</mask_b>\n\
     \t</object>\n";
 }

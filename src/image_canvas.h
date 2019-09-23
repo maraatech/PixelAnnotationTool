@@ -54,6 +54,7 @@ public slots :
 	void setSizePen(int);
 	void clearMask();
 	void saveMask();
+	void smartMask();
 	void undo();
 	void redo();
 	
@@ -75,6 +76,7 @@ private:
 	QImage           _image            ;
 	QImage           _orig_image       ;
 	QImage           _buffer_image     ;
+	ImageMask        _smart_mask       ;
 	ImageMask        _mask             ;
 	ImageMask        _watershed        ;
 	QList<ImageMask> _undo_list        ;
@@ -83,9 +85,11 @@ private:
 	QPoint           _mouse_pos        ;
 	QString          _img_file         ;
 	QString          _mask_file        ;
+	QString          _smart_mask_file  ;
 	QString          _watershed_file   ;
     QString          _annotation_file  ;
 	ColorMask        _color            ;
+	int              _instance_num     ;
 	int              _pen_size         ;
 	bool             _button_is_pressed;
     int start_x;

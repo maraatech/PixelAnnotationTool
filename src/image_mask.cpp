@@ -1,14 +1,19 @@
 #include "image_mask.h"
 #include "utils.h"
 
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <set>
 #include <QPainter>
 
 ImageMask::ImageMask() {}
+
 ImageMask::ImageMask(const QString &file, Id2Labels id_labels) {
 	id = mat2QImage(cv::imread(file.toStdString()));
 	color = idToColor(id, id_labels);
     createBuffer();
 }
+
 ImageMask::ImageMask(QSize s) {
 	id = QImage(s, QImage::Format_RGB888);
 	color = QImage(s, QImage::Format_RGB888);
@@ -17,7 +22,43 @@ ImageMask::ImageMask(QSize s) {
     createBuffer();
 }
 
+int ImageMask::loadSmartMaskFile(const QString &file)
+{
+	cv::Mat img = cv::imread(file.toStdString());
+	color = mat2QImage(img);
+	createBuffer();
+}
+
+int ImageMask::countInstances() {
+	auto colors = findUniqueColors(color);
+
+	// Remove background color as  this is not a valid instance
+	colors.erase(QColor(0, 0, 0));
+	
+	return colors.size();
+}
+
+ColorMask ImageMask::getSmartMask(ColorMask cm, int instance_num) {
+	if (cm.color.red() == 0) {
+		return cm;	
+	}
+
+	ColorMask smart_cm = {};
+	smart_cm.id = cm.id;
+	// For debugging to make differences more noticable
+	instance_num = instance_num * 10;
+	// In the unlikely case that more than 256 * 256 instances have been labelled in this image
+	if ((instance_num / (256 * 256)) > 0) {
+		std::cout<<"Error: Instance Number("<<instance_num<<") more than allowed 256^2. Looping Smart mask colors"<<std::endl;
+		instance_num = instance_num % (256 * 256);
+	}
+
+	smart_cm.color = QColor(cm.color.red(), instance_num / 256, instance_num % 256);
+	return smart_cm;
+}
+
 void ImageMask::drawFillCircle(int x, int y, int pen_size, ColorMask cm) {
+	std::cout << "R: " << cm.color.red() << "G: " << cm.color.green() << "B: " << cm.color.blue() <<std::endl;
 	QPen pen(QBrush(cm.id), 1.0);
 	QPainter painter_id(&id);
 	painter_id.setRenderHint(QPainter::Antialiasing, false);
@@ -36,13 +77,19 @@ void ImageMask::drawFillCircle(int x, int y, int pen_size, ColorMask cm) {
     circle(this->_buffer, cv::Point(x,y), pen_size/2.0, getColor(cm.color),CV_FILLED);
 }
 
-void ImageMask::fill(int x, int y, ColorMask cm, const Id2Labels & id_labels){
+void ImageMask::fill(int x, int y, ColorMask cm, const Id2Labels & id_labels) {
     //color
     cv::Mat id_mat = qImage2Mat(id);
 	cv::floodFill(id_mat, cv::Point(x, y), cv::Scalar(cm.id.red(), cm.id.green(), cm.id.blue()), 0, cv::Scalar(0, 0, 0), cv::Scalar(0, 0, 0));
     //cv::imshow("showing buffer",id_mat);
 	id = mat2QImage(id_mat);
 	color = idToColor(id, id_labels);
+}
+
+void ImageMask::fill(int x, int y, ColorMask cm) {
+	cv::Mat color_mat = qImage2Mat(color);
+	cv::floodFill(color_mat, cv::Point(x, y), cv::Scalar(cm.color.blue(), cm.color.green(), cm.color.red()), 0, cv::Scalar(0, 0, 0), cv::Scalar(0, 0, 0));
+	color = mat2QImage(color_mat);
 }
 
 void ImageMask::createBoundingBox(int x, int y){

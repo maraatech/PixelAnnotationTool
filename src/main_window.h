@@ -51,6 +51,7 @@ public:
     QAction        * clear_mask_action;
     QAction        * close_tab_action;
 	QAction        * undo_action  ;
+	QAction        * smart_mask_action ;
     QAction        * swap_action;
 	QAction        * redo_action  ;
 	QAction        * open_dir_action  ;
