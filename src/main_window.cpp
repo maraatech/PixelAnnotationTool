@@ -193,7 +193,7 @@ void MainWindow::changeLabel(QListWidgetItem* current, QListWidgetItem* previous
 }
 
 void MainWindow::runWatershed(ImageCanvas * ic) {
-    QImage iwatershed = watershed(ic->getImage(), ic->getMask().id);
+    QImage iwatershed = watershed(ic->getImage(), ic->getImageMask().id);
     if (!checkbox_border_ws->isChecked()) {
         iwatershed = removeBorder(iwatershed, id_labels);
     }
@@ -414,7 +414,7 @@ void MainWindow::copyMask() {
     if (ic == NULL)
         return;
 
-    _tmp = ic->getMask();
+    _tmp = ic->getImageMask();
 
 }
 

@@ -30,6 +30,8 @@ ImageCanvas::ImageCanvas(MainWindow *ui) :
     _scroll_parent->setWidget(this);
     _operation_mode = DRAW_MODE;
     _instance_num = 0;
+
+    _op_manager = new OperationManager(this);
 }
 
 ImageCanvas::~ImageCanvas() {
@@ -333,6 +335,8 @@ void ImageCanvas::mousePressEvent(QMouseEvent * e) {
                 _startMarkingBoundingBox(e);
             }else{
                 //unmark
+                std::cout<<"Finished changing box: " << std::to_string(idx) << " Realsize: " << box_list.size() << std::endl;
+                _op_manager->change_bbox(box_list[idx], idx);
                 box_list[idx].unselect();
                 drawBoundingBox(box_list[idx]);
                 _operation_mode = BOX_UNSELECTING;
@@ -418,13 +422,14 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
         std::cout<<"mouse released"<<getXYonImage(e)<<std::endl;
 		_button_is_pressed = false;
         if(_operation_mode == DRAW_MODE){
-            
+            _op_manager->save_draw();
         }
         if(_operation_mode == BOX_CREATING && this-> start_x > -1 && this-> start_y > -1){
                 BoundingBox b(cv::Point(start_x, start_y), getXYonImage(e),getObjectString());
                 if(b.getWidth()> 5 && b.getHeight()> 5){
                     box_list.push_back(b);
                     std::cout<<"creating bounding box "<< b.getMinMinPoint()<<b.getMaxMaxPoint()<<std::endl;
+                    _op_manager->create_bbox(b);
                 }
                 reset();
         }
@@ -432,9 +437,10 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
             reset(BOX_SELECTED);
             drawMarkedBoundingBox(box_list[getSelectedBox()]);
         }
-        if(_operation_mode == BOX_UNSELECTING){
+        if(_operation_mode == BOX_UNSELECTING) {
             reset();
             _operation_mode = DRAW_MODE;
+
         }
 		if (_undo) {
 			QMutableListIterator<ImageMask> it(_undo_list);
@@ -494,10 +500,10 @@ void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
 
     if (_pen_size > 0) {
 		_mask.drawFillCircle(x, y, _pen_size, _color);
-        _smart_mask.drawFillCircle(x, y, _pen_size, _mask.getSmartMask(_color, _instance_num));
+        _smart_mask.drawFillCircle(x, y, _pen_size, _mask.getSmartColorMask(_color, _instance_num));
 	} else {
 		_mask.drawPixel(x, y, _color);
-        _smart_mask.drawPixel(x, y, _mask.getSmartMask(_color, _instance_num));
+        _smart_mask.drawPixel(x, y, _mask.getSmartColorMask(_color, _instance_num));
 	} 
 	update();
 }
@@ -507,7 +513,7 @@ void ImageCanvas::_fill(QMouseEvent *e){
     int x = p.x;
     int y = p.y;
     _mask.fill(x, y, _color,_ui->id_labels);
-    _smart_mask.fill(x, y, _mask.getSmartMask(_color, _instance_num));
+    _smart_mask.fill(x, y, _mask.getSmartColorMask(_color, _instance_num));
 }
 
 void ImageCanvas::_startMarkingBoundingBox(QMouseEvent *e){
@@ -582,7 +588,9 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
             if(i== -1){
                 return;
             }
-            std::cout<<"box "<<box_list[i].getId()<<std::endl;
+            _op_manager->delete_bbox(box_list[i]);
+            std::cout<<"box: ";
+            box_list[i].printBoxParam();
             box_list.erase (box_list.begin()+i);
             redrawBoundingBox();
             update(); 
@@ -595,16 +603,20 @@ void ImageCanvas::setWatershedMask(QImage watershed) {
 	idToColor(_watershed.id, _ui->id_labels, &_watershed.color);
 }
 
-void ImageCanvas::setMask(const ImageMask & mask) {
+void ImageCanvas::setImageMask(const ImageMask & mask) {
 	_mask = mask;
 }
 
 void ImageCanvas::setActionMask(const ImageMask & mask) {
-    setMask(mask);
+    setImageMask(mask);
     _undo_list.push_back(_mask);
     _undo_index++;
     _ui->setStarAtNameOfTab(true);
     _ui->undo_action->setEnabled(true);
+}
+
+void ImageCanvas::setSmartImageMask(const ImageMask & smart_mask) {
+    _smart_mask = smart_mask;
 }
 
 void ImageCanvas::setId(int id) {
@@ -622,6 +634,12 @@ void ImageCanvas::refresh() {
 
 
 void ImageCanvas::undo() {
+    if (_operation_mode == DRAW_MODE) {
+        _op_manager->undo();
+    }
+    update();
+    
+    /*
 	_undo = true;
 	_undo_index--;
 	if (_undo_index == 1) {
@@ -635,10 +653,16 @@ void ImageCanvas::undo() {
 		_undo_index = 0;
 		_ui->undo_action->setEnabled(false);
 	}
+    */
 	_ui->redo_action->setEnabled(true);
 }
 
 void ImageCanvas::redo() {
+    if (_operation_mode == DRAW_MODE) {
+        _op_manager->redo();
+    }
+    update();
+    /*
 	_undo_index++;
 	if (_undo_index < _undo_list.size()) {
 		_mask = _undo_list.at(_undo_index - 1);
@@ -651,6 +675,7 @@ void ImageCanvas::redo() {
 		_undo_index = _undo_list.size();
 		_ui->redo_action->setEnabled(false);
 	}
+    */
 	_ui->undo_action->setEnabled(true);
 }
 

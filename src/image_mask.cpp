@@ -6,6 +6,38 @@
 #include <set>
 #include <QPainter>
 
+
+Mask Mask::clone() {
+	Mask out;
+	out.id = id.clone();
+	out.color= color.clone();
+	return out;
+}
+
+MaskDiff::MaskDiff() {}
+
+MaskDiff::MaskDiff(Mask src, Mask dest) {
+	id = dest.id - src. id;
+	color = dest.color - src.color;
+}
+
+Mask MaskDiff::applyDiff(Mask mask) {
+	mask.id += id;
+	mask.color += color;
+	return mask;
+}
+
+Mask MaskDiff::removeDiff(Mask mask) {
+	std::cout << "MaskDiffId: Size: [" << id.size().height << ", " << id.size().width << ", [" << id.channels() << "]" << std::endl;
+	std::cout << "MaskDiffColor: Size: [" << color.size().height << ", " << color.size().width << ", [" << color.channels() << "]" << std::endl;
+	std::cout << "MaskId: Size: [" << mask.id.size().height << ", " << mask.id.size().width << ", [" << mask.id.channels() << "]" << std::endl;
+	std::cout << "MaskColor: Size: [" << mask.color.size().height << ", " << mask.color.size().width << ", [" << mask.color.channels() << "]" << std::endl;
+	mask.id -= id;
+	mask.color -= color;
+
+	return mask;
+}
+
 ImageMask::ImageMask() {}
 
 ImageMask::ImageMask(const QString &file, Id2Labels id_labels) {
@@ -22,8 +54,19 @@ ImageMask::ImageMask(QSize s) {
     createBuffer();
 }
 
-int ImageMask::loadSmartMaskFile(const QString &file)
-{
+Mask ImageMask::getMask() {
+	Mask mask = {};
+	mask.id = qImage2Mat(id);
+	mask.color = qImage2Mat(color);
+	return mask;
+}
+
+void ImageMask::setMask(Mask mask) {
+	id = mat2QImage(mask.id);
+	color = mat2QImage(mask.color);
+}
+
+int ImageMask::loadSmartMaskFile(const QString &file) {
 	cv::Mat img = cv::imread(file.toStdString());
 	color = mat2QImage(img);
 	createBuffer();
@@ -38,7 +81,7 @@ int ImageMask::countInstances() {
 	return colors.size();
 }
 
-ColorMask ImageMask::getSmartMask(ColorMask cm, int instance_num) {
+ColorMask ImageMask::getSmartColorMask(ColorMask cm, int instance_num) {
 	if (cm.color.red() == 0) {
 		return cm;	
 	}

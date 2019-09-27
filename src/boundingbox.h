@@ -9,6 +9,7 @@ typedef std::vector<cv::Point> PointList;
 
 class BoundingBox{
     public:
+        BoundingBox() {}
         BoundingBox(cv::Point orig_point, cv::Point end_point, std::string name="");
         bool isWithinBoundingBox(int x, int y);
         bool isWithinBoundingBox(cv::Point p);
@@ -38,6 +39,7 @@ class BoundingBox{
 
         void setMaskColor(QColor color);
         QColor getMaskColor();
+        
     private:
         std::string _object_name;
         int _min_x, _min_y, _max_x, _max_y;

@@ -10,6 +10,24 @@ struct ColorMask {
 	QColor color;
 };
 
+struct Mask {
+    cv::Mat id;
+    cv::Mat color;
+
+    Mask clone();
+};
+
+struct MaskDiff {
+    cv::Mat id;
+    cv::Mat color;
+
+    MaskDiff();
+    MaskDiff(Mask src, Mask dest);
+
+    Mask applyDiff(Mask mask);
+    Mask removeDiff(Mask mask);
+};
+
 struct ImageMask {
 	QImage id;
 	QImage color;
@@ -19,9 +37,12 @@ struct ImageMask {
 	ImageMask(const QString &file, Id2Labels id_labels);
 	ImageMask(QSize s);
 
+    Mask getMask();
+    void setMask(Mask mask);
+
     int loadSmartMaskFile(const QString &file);
     int countInstances();
-    ColorMask getSmartMask(ColorMask cm, int instance_num);
+    ColorMask getSmartColorMask(ColorMask cm, int instance_num);
 	void drawFillCircle(int x, int y, int pen_size, ColorMask cm);
 	void drawPixel(int x, int y, ColorMask cm);
 	void updateColor(const Id2Labels & labels);

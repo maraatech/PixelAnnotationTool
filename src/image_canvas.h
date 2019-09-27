@@ -4,12 +4,15 @@
 #include "utils.h"
 #include "image_mask.h"
 #include "boundingbox.h"
+#include "operations.h"
 
 #include <QLabel>
 #include <QPen>
 #include <QScrollArea>
 
 class MainWindow;
+
+class OperationManager;
 
 class ImageCanvas : public QLabel {
 	Q_OBJECT
@@ -20,11 +23,13 @@ public:
     ~ImageCanvas();
 
 	void setId(int id);
-	void setMask(const ImageMask & mask);
+	void setImageMask(const ImageMask & mask);
+	void setSmartImageMask(const ImageMask & smart_mask);
     void setActionMask(const ImageMask & mask);
-    ImageMask getMask() const { return _mask; }
+    ImageMask getImageMask() const { return _mask; }
+    ImageMask getSmartImageMask() const { return _mask; }
     QImage getImage() const { return _image; }
-
+    std::vector<BoundingBox>& getBoxList() { return box_list; }
 
 	void setWatershedMask(QImage watershed);
 	void refresh();
@@ -60,6 +65,7 @@ public slots :
 	
 private:
 	MainWindow *_ui;
+	OperationManager *_op_manager;
 	
 	void _initPixmap();
 	void _drawFillCircle(QMouseEvent * e);
