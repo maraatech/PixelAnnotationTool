@@ -256,9 +256,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="button_watershed">
+        <widget class="QPushButton" name="button_smart_mask">
          <property name="text">
-          <string>Watershed</string>
+          <string>Smart Mask</string>
          </property>
         </widget>
        </item>

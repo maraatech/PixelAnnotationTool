@@ -10,8 +10,6 @@ void DrawOperation::undo() {
 
 	_canvas->setImageMask(imask);
 	_canvas->setSmartImageMask(smart_imask);
-
-	std::cout << "Success!" << std::endl;
 }
 
 void DrawOperation::redo() {
@@ -45,7 +43,6 @@ void CreateBoxOperation::undo() {
 }
 
 void CreateBoxOperation::redo() {
-	std::cout << "Create BBOX redo..." << std:: endl;
 	if (_create_flag) {
 		_canvas->getBoxList().push_back(_new_bbox);
 	} else {
@@ -60,7 +57,6 @@ void ChangeBoxOperation::undo() {
 }
 
 void ChangeBoxOperation::redo() {
-	std::cout << "Change BBOX redo..." << std:: endl;
 	_canvas->getBoxList()[_index] = _new_bbox;
 	_canvas->redrawBoundingBox();
 }
@@ -93,51 +89,25 @@ void OperationManager::save_draw() {
 	MaskDiff smart_mask_diff = MaskDiff(curr_smart_mask, smart_mask);
 
 	this->add_op(new DrawOperation(_canvas, mask_diff, smart_mask_diff));
-
-	std::cout << "Finished drawing" << std::endl;
 }
 
 void OperationManager::create_bbox(BoundingBox bbox) {
 	this->add_op(new CreateBoxOperation(_canvas, bbox, true));
-
-	std::cout << "Finished creating box: ";
 	bbox.printBoxParam();
 }
 
 void OperationManager::delete_bbox(BoundingBox bbox) {
 	this->add_op(new CreateBoxOperation(_canvas, bbox, false));
-	std::cout << "Finished deleting box: ";
 	bbox.printBoxParam();
 }
 
 void OperationManager::change_bbox(BoundingBox bbox, int index) {
-	std::cout << "test" << std::endl;
 	this->add_op(new ChangeBoxOperation(_canvas, bbox, curr_bbox_list[index], index));
-	std::cout << "Finished changing box from: " << std::endl;
-	curr_bbox_list[index].printBoxParam();
-	std::cout << "to: " << std::endl;
 	bbox.printBoxParam();
 }
 
 void OperationManager::smart_mask(const std::vector<BoundingBox> before, const std::vector<BoundingBox> after) {
-	std::cout<< "Smart mask operation.." << std:: endl;
-
-	std::cout << "Before op" << std::endl;
-	for (auto bbox : before)
-	{
-		bbox.printBoxParam();
-	}
-
-	std::cout << "After op" << std::endl;
-
-	for (auto bbox : after)
-	{
-		bbox.printBoxParam();
-	}
-
 	this->add_op(new SmartMaskOperation(_canvas, before, after));
-
-	std::cout <<"Finished" << std::endl;
 }
 
 void OperationManager::undo() {

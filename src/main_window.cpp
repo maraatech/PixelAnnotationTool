@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 
 	tabWidget->clear();
     
-	connect(button_smart_mask      , SIGNAL(released())                        , this, SLOT(smartMask()  ));
+	connect(button_smart_mask      , SIGNAL(released())                        , this, SLOT(runSmartMask()  ));
     connect(swap_action           , SIGNAL(triggered())                       , this, SLOT(swapView()      ));
 	connect(actionOpen_config_file, SIGNAL(triggered())                       , this, SLOT(loadConfigFile()));
 	connect(actionSave_config_file, SIGNAL(triggered())                       , this, SLOT(saveConfigFile()));
@@ -206,6 +206,13 @@ void MainWindow::runWatershed() {
     ImageCanvas * ic = image_canvas;
     if( ic != NULL)
         runWatershed(ic);
+}
+
+void MainWindow::runSmartMask() {
+	std::cout << "PRESSED" << std::endl;
+	ImageCanvas * ic = image_canvas;
+    if( ic != NULL)
+        ic->smartMask();
 }
 
 void MainWindow::setStarAtNameOfTab(bool star) {

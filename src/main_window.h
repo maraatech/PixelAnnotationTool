@@ -71,6 +71,7 @@ public slots:
 	void saveConfigFile();
 	void loadConfigFile();
 	void runWatershed();
+	void runSmartMask();
     void swapView();
 	void on_tree_widget_img_currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *);
 	void on_actionOpenDir_triggered();

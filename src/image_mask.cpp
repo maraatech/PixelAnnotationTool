@@ -85,7 +85,7 @@ ColorMask ImageMask::getSmartColorMask(ColorMask cm, int instance_num) {
 	ColorMask smart_cm = {};
 	smart_cm.id = cm.id;
 	// For debugging to make differences more noticable
-	instance_num = instance_num * 10;
+	instance_num = instance_num;
 	// In the unlikely case that more than 256 * 256 instances have been labelled in this image
 	if ((instance_num / (256 * 256)) > 0) {
 		std::cout<<"Error: Instance Number("<<instance_num<<") more than allowed 256^2. Looping Smart mask colors"<<std::endl;

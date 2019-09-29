@@ -141,18 +141,12 @@ void ImageCanvas::smartMask() {
     std::cout << "Found unique colors: " << n << std::endl;
     for (auto c : unique)
     {
-        std::cout << "R: " << c.red() << " G: " << c.green() << " B: " << c.blue() << std::endl;
         int id = _ui->id_labels.getIdFromR(c.red());
         auto label = _ui->id_labels[id]->name.toStdString();
 
-        std::cout << "Name: " << label << std::endl;
-
         BoundingBox bbox = findBoundingBox(img, c, label);
-        bbox.printBoxParam();
         bbox.setMaskColor(c);
         box_list.push_back(bbox);
-        std::cout << "Added box to list" << std::endl;
-        // TODO: Need to add SmartMask
     }
 
     auto postop_box_list = box_list;

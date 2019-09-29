@@ -41,7 +41,6 @@ BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name)
 	cv::Point minmin = cv::Point(0, 0);
 	cv::Point maxmax = cv::Point(img.cols - 1, img.rows - 1);
 
-	std::cout<< "Performing top down scan" << std::endl;
 	// Top down scan
 	for (int i = minmin.y; i <= maxmax.y; i++)
 	{
@@ -50,14 +49,12 @@ BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name)
 		{
 			auto pixel = img.at<cv::Vec3b>(i,j);
 			if (target == QColor(pixel[2], pixel[1], pixel[0])) {
-				std::cout << "FOUND" << std::endl;
 				goto finish_top_scan;
 			}
 		}
 	}
 	finish_top_scan:
 
-	std::cout<< "Performing bottom down scan" << std::endl;
 	// Bottom up scan
 	for (int i = maxmax.y; i >= minmin.y; i--)
 	{
@@ -66,14 +63,12 @@ BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name)
 		{
 			auto pixel = img.at<cv::Vec3b>(i,j);
 			if (target == QColor(pixel[2], pixel[1], pixel[0])) {
-				std::cout << "FOUND" << std::endl;
 				goto finish_bottom_scan;
 			}
 		}
 	}
 	finish_bottom_scan:
 
-	std::cout<< "Performing left scan" << std::endl;
 	// Left right scan
 	for (int j = minmin.x; j <= maxmax.x; j++)
 	{
@@ -82,14 +77,12 @@ BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name)
 		{
 			auto pixel = img.at<cv::Vec3b>(i,j);
 			if (target == QColor(pixel[2], pixel[1], pixel[0])) {
-				std::cout << "FOUND" << std::endl;
 				goto finish_left_scan;
 			}
 		}
 	}
 	finish_left_scan:
 
-	std::cout<< "Performing right scan" << std::endl;
 	// Right left scan
 	for (int j = maxmax.x; j >= minmin.x; j--)
 	{
@@ -98,14 +91,11 @@ BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name)
 		{
 			auto pixel = img.at<cv::Vec3b>(i,j);
 			if (target == QColor(pixel[2], pixel[1], pixel[0])) {
-				std::cout << "FOUND" << std::endl;
 				goto finish_right_scan;
 			}
 		}
 	}
 	finish_right_scan:
-
-	std::cout<< "Done" << std::endl;
 
 	return BoundingBox(minmin, maxmax, name);
 }
