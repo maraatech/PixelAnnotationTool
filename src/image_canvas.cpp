@@ -22,10 +22,6 @@ ImageCanvas::ImageCanvas(MainWindow *ui) :
 	setMouseTracking(true);
 	_button_is_pressed = false;
 
-	_undo_list.clear();
-	_undo_index = 0;
-	_undo = false;
-
     _scroll_parent->setBackgroundRole(QPalette::Dark);
     _scroll_parent->setWidget(this);
     _operation_mode = DRAW_MODE;
@@ -36,6 +32,10 @@ ImageCanvas::ImageCanvas(MainWindow *ui) :
 
 ImageCanvas::~ImageCanvas() {
     _scroll_parent->deleteLater();
+}
+
+bool ImageCanvas::isNotSaved() { 
+    return _op_manager->num_ops() > 0; 
 }
 
 void ImageCanvas::_initPixmap() {
@@ -66,8 +66,6 @@ void ImageCanvas::loadImage(const QString &filename) {
     _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + ".xml";
     
 	_watershed = ImageMask(_image.size());
-	_undo_list.clear();
-	_undo_index = 0;
 	if (QFile(_mask_file).exists()) {
 		_mask = ImageMask(_mask_file,_ui->id_labels);
         _smart_mask = ImageMask(_image.size());
@@ -76,8 +74,6 @@ void ImageCanvas::loadImage(const QString &filename) {
         std::cout << "Found Unique Instances:" << _instance_num << std::endl;
         //_ui->runWatershed(this);// button_watershed->released());
 		_ui->checkbox_manuel_mask->setChecked(true);
-		_undo_list.push_back(_mask);
-		_undo_index++;
 	} else {
 		clearMask();
 	}
@@ -138,6 +134,8 @@ void ImageCanvas::smartMask() {
 
     _instance_num = n;
 
+    auto preop_box_list = box_list;
+
     box_list.clear();
 
     std::cout << "Found unique colors: " << n << std::endl;
@@ -154,7 +152,11 @@ void ImageCanvas::smartMask() {
         bbox.setMaskColor(c);
         box_list.push_back(bbox);
         std::cout << "Added box to list" << std::endl;
+        // TODO: Need to add SmartMask
     }
+
+    auto postop_box_list = box_list;
+    _op_manager->smart_mask(preop_box_list, postop_box_list);
 
     redrawBoundingBox();
 }
@@ -165,22 +167,12 @@ void ImageCanvas::saveMask() {
 		return;
 
 	_mask.id.save(_mask_file);
-//	if (!_watershed.id.isNull()) {
-//        QImage watershed = _watershed.id;
-////         if (!_ui->checkbox_border_ws->isChecked()) {
-////             watershed = removeBorder(_watershed.id, _ui->id_labels);
-////         }
-//		watershed.save(_watershed_file);
-		QFileInfo file(_img_file);
-//		QString color_file = file.dir().absolutePath() + "/" + file.baseName() + "_color_mask.png";
-//		idToColor(watershed, _ui->id_labels).save(color_file);
-//	}
+    QFileInfo file(_img_file);
+
     QString color_file = file.dir().absolutePath() + "/" + file.baseName() + "_color_mask.png";
     _mask.color.save(color_file);
     _smart_mask.color.save(_smart_mask_file);
     saveAnnotation();
-    _undo_list.clear();
-    _undo_index = 0;
     _ui->setStarAtNameOfTab(false);
 }
 
@@ -392,8 +384,6 @@ void ImageCanvas::mouseMoveEvent(QMouseEvent * e) {
             box_list[getSelectedBox()].resize(x_diff, y_diff);
             start_x = cur_pt.x;
             start_y = cur_pt.y;
-            //std::cout<<"box resized";
-            //box_list[getSelectedBox()].printBoxParam();
             drawMarkedBoundingBox(box_list[getSelectedBox()]);
         }else if(_operation_mode == BOX_CREATING){
             _drawBoundingBox(e);
@@ -442,19 +432,6 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
             _operation_mode = DRAW_MODE;
 
         }
-		if (_undo) {
-			QMutableListIterator<ImageMask> it(_undo_list);
-			int i = 0;
-			while (it.hasNext()) {
-				it.next();
-				if (i++ >= _undo_index)
-					it.remove();
-			}
-			_undo = false;
-			_ui->redo_action->setEnabled(false);
-		}
-		_undo_list.push_back(_mask);
-		_undo_index++;
         _ui->setStarAtNameOfTab(true);
 		_ui->undo_action->setEnabled(true);
 	}
@@ -486,12 +463,9 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
 	}
 }
 
-
 void ImageCanvas::setSizePen(int pen_size) {
 	_pen_size = pen_size;
 }
-
-
 
 void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
 	cv::Point p = getXYonImage(e);
@@ -504,7 +478,7 @@ void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
 	} else {
 		_mask.drawPixel(x, y, _color);
         _smart_mask.drawPixel(x, y, _mask.getSmartColorMask(_color, _instance_num));
-	} 
+	}  ImageMask        _watershed        ;
 	update();
 }
 
@@ -549,10 +523,7 @@ void ImageCanvas::clearMask() {
 	_mask = ImageMask(_image.size());
 	_watershed = ImageMask(_image.size());
     _smart_mask = ImageMask(_image.size());
-	_undo_list.clear();
-	_undo_index = 0;
 	repaint();
-	
 }
 
 void ImageCanvas::wheelEvent(QWheelEvent * event) {
@@ -607,13 +578,6 @@ void ImageCanvas::setImageMask(const ImageMask & mask) {
 	_mask = mask;
 }
 
-void ImageCanvas::setActionMask(const ImageMask & mask) {
-    setImageMask(mask);
-    _undo_list.push_back(_mask);
-    _undo_index++;
-    _ui->setStarAtNameOfTab(true);
-    _ui->undo_action->setEnabled(true);
-}
 
 void ImageCanvas::setSmartImageMask(const ImageMask & smart_mask) {
     _smart_mask = smart_mask;
@@ -638,22 +602,7 @@ void ImageCanvas::undo() {
         _op_manager->undo();
     }
     update();
-    
-    /*
-	_undo = true;
-	_undo_index--;
-	if (_undo_index == 1) {
-		_mask = _undo_list.at(_undo_index - 1);
-		_ui->undo_action->setEnabled(false);
-		refresh();
-	} else if (_undo_index > 1) {
-		_mask = _undo_list.at(_undo_index - 1);
-		refresh();
-	} else {
-		_undo_index = 0;
-		_ui->undo_action->setEnabled(false);
-	}
-    */
+
 	_ui->redo_action->setEnabled(true);
 }
 
@@ -662,20 +611,6 @@ void ImageCanvas::redo() {
         _op_manager->redo();
     }
     update();
-    /*
-	_undo_index++;
-	if (_undo_index < _undo_list.size()) {
-		_mask = _undo_list.at(_undo_index - 1);
-		refresh();
-	}  else if (_undo_index == _undo_list.size()) {
-		_mask = _undo_list.at(_undo_index - 1);
-		_ui->redo_action->setEnabled(false);
-		refresh();
-	} else {
-		_undo_index = _undo_list.size();
-		_ui->redo_action->setEnabled(false);
-	}
-    */
 	_ui->undo_action->setEnabled(true);
 }
 

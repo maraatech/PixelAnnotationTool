@@ -25,6 +25,16 @@ void DrawOperation::redo() {
 	_canvas->setSmartImageMask(smart_imask);
 }
 
+void SmartMaskOperation::undo() {
+	_canvas->setBoundingBoxList(_before);
+	_canvas->redrawBoundingBox();
+}
+
+void SmartMaskOperation::redo() {
+	_canvas->setBoundingBoxList(_after);
+	_canvas->redrawBoundingBox();
+}
+
 void CreateBoxOperation::undo() {
 	if (_create_flag) {
 		_canvas->getBoxList().pop_back();
@@ -107,6 +117,27 @@ void OperationManager::change_bbox(BoundingBox bbox, int index) {
 	curr_bbox_list[index].printBoxParam();
 	std::cout << "to: " << std::endl;
 	bbox.printBoxParam();
+}
+
+void OperationManager::smart_mask(const std::vector<BoundingBox> before, const std::vector<BoundingBox> after) {
+	std::cout<< "Smart mask operation.." << std:: endl;
+
+	std::cout << "Before op" << std::endl;
+	for (auto bbox : before)
+	{
+		bbox.printBoxParam();
+	}
+
+	std::cout << "After op" << std::endl;
+
+	for (auto bbox : after)
+	{
+		bbox.printBoxParam();
+	}
+
+	this->add_op(new SmartMaskOperation(_canvas, before, after));
+
+	std::cout <<"Finished" << std::endl;
 }
 
 void OperationManager::undo() {

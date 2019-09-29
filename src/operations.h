@@ -37,6 +37,21 @@ protected:
 	MaskDiff _smart_mask_diff;
 };
 
+class SmartMaskOperation : public Operations {
+public:
+	SmartMaskOperation() {}
+	~SmartMaskOperation() {}
+	SmartMaskOperation(ImageCanvas * canvas, std::vector<BoundingBox> before, std::vector<BoundingBox> after) : Operations(canvas), _before(before), _after(after) {}
+
+	void undo();
+	void redo();
+	virtual void speak() { std::cout << "Smart OP" << std::endl; }
+
+protected:
+	std::vector<BoundingBox> _before;
+	std::vector<BoundingBox> _after;
+};
+
 class BoundingBoxOperation : public Operations {
 public:
 	BoundingBoxOperation() {}
@@ -87,9 +102,12 @@ public:
 	void create_bbox(BoundingBox bbox);
 	void delete_bbox(BoundingBox bbox);
 	void change_bbox(BoundingBox bbox, int index);
+	void smart_mask(const std::vector<BoundingBox> before, const std::vector<BoundingBox> after);
 
 	void undo();
 	void redo();
+
+	int num_ops() { return op_list.size(); }
 
 protected:
 	ImageCanvas *_canvas;

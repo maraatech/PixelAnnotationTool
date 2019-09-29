@@ -25,7 +25,7 @@ public:
 	void setId(int id);
 	void setImageMask(const ImageMask & mask);
 	void setSmartImageMask(const ImageMask & smart_mask);
-    void setActionMask(const ImageMask & mask);
+	void setBoundingBoxList(const std::vector<BoundingBox> &b_list) { box_list = b_list; }
     ImageMask getImageMask() const { return _mask; }
     ImageMask getSmartImageMask() const { return _mask; }
     QImage getImage() const { return _image; }
@@ -36,7 +36,7 @@ public:
 	void updateMaskColor(const Id2Labels & labels) { _mask.updateColor(labels); }
 	void loadImage(const QString &file);
 	QScrollArea * getScrollParent() const { return _scroll_parent; }
-    bool isNotSaved() const { return _undo_list.size() > 1; }
+    bool isNotSaved();
     void redrawBoundingBox(int except_index =-1);
     int getSelectedBox();
     void reset(int operation=DRAW_MODE);
@@ -85,9 +85,6 @@ private:
 	ImageMask        _smart_mask       ;
 	ImageMask        _mask             ;
 	ImageMask        _watershed        ;
-	QList<ImageMask> _undo_list        ;
-	bool             _undo             ;
-	int              _undo_index       ;
 	QPoint           _mouse_pos        ;
 	QString          _img_file         ;
 	QString          _mask_file        ;

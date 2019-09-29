@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 
 	tabWidget->clear();
     
-	connect(button_watershed      , SIGNAL(released())                        , this, SLOT(runWatershed()  ));
+	connect(button_smart_mask      , SIGNAL(released())                        , this, SLOT(smartMask()  ));
     connect(swap_action           , SIGNAL(triggered())                       , this, SLOT(swapView()      ));
 	connect(actionOpen_config_file, SIGNAL(triggered())                       , this, SLOT(loadConfigFile()));
 	connect(actionSave_config_file, SIGNAL(triggered())                       , this, SLOT(saveConfigFile()));
@@ -422,8 +422,6 @@ void MainWindow::pasteMask() {
     ImageCanvas * ic = getCurrentImageCanvas();
     if (ic == NULL)
         return;
-
-    ic->setActionMask(_tmp);
 }
 
 void MainWindow::clearMask() {
@@ -432,7 +430,6 @@ void MainWindow::clearMask() {
         return;
 
     ImageMask clear(QSize(ic->width(),ic->height()));
-    ic->setActionMask(clear);
 }
 
 ImageCanvas * MainWindow::getCurrentImageCanvas() {

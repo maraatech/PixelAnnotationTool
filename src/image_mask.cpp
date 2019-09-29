@@ -28,10 +28,6 @@ Mask MaskDiff::applyDiff(Mask mask) {
 }
 
 Mask MaskDiff::removeDiff(Mask mask) {
-	std::cout << "MaskDiffId: Size: [" << id.size().height << ", " << id.size().width << ", [" << id.channels() << "]" << std::endl;
-	std::cout << "MaskDiffColor: Size: [" << color.size().height << ", " << color.size().width << ", [" << color.channels() << "]" << std::endl;
-	std::cout << "MaskId: Size: [" << mask.id.size().height << ", " << mask.id.size().width << ", [" << mask.id.channels() << "]" << std::endl;
-	std::cout << "MaskColor: Size: [" << mask.color.size().height << ", " << mask.color.size().width << ", [" << mask.color.channels() << "]" << std::endl;
 	mask.id -= id;
 	mask.color -= color;
 
