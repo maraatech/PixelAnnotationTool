@@ -190,7 +190,7 @@ void ImageCanvas::saveAnnotation(){
         text+=b.toXML();
     }
     text = text+ "\n</annotation>";
-    std::string file_name = file.dir().absolutePath().toStdString() + "/xml/"+file.baseName().toStdString()+".xml";
+    std::string file_name = file.dir().absolutePath().toStdString() + "/xml/"+file.baseName().toStdString()+"_bbox.xml";
     std::ofstream out(file_name);
     out << text;
     out.close();
