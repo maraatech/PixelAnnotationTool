@@ -86,10 +86,6 @@ set(OpenCV_BIN ${OpenCV_LIB_PATH}/../bin)
 set(NAME_RELEASE PixelAnnotationTool_${ARCH_TYPE}_v${PIXEL_ANNOTATION_VERSION})
 set(DIR_NAME_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/${NAME_RELEASE})
 set_target_properties( PixelAnnotationTool PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DIR_NAME_RELEASE})	
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/images_test/Abbey_Road.jpg 
-          ${CMAKE_CURRENT_SOURCE_DIR}/images_test/Abbey_Road_mask.png 
-          ${CMAKE_CURRENT_SOURCE_DIR}/images_test/road1.jpg 
-          DESTINATION ${DIR_NAME_RELEASE}/images_test )
           
 string(REGEX REPLACE "\\." "" CV_VERSION_NUMBER ${OpenCV_VERSION})
 if( "${OpenCV_LIBS}" MATCHES "opencv_world" )
