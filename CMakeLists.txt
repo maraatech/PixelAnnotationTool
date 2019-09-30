@@ -72,7 +72,9 @@ add_executable(PixelAnnotationTool MACOSX_BUNDLE WIN32
 	src/image_mask.h
 	src/image_mask.cpp
 	src/image_canvas.h
-	src/image_canvas.cpp 
+	src/image_canvas.cpp
+  src/operations.h
+  src/operations.cpp
 	src/label_widget.h 
 	src/label_widget.cpp 
 	src/main.cpp 
