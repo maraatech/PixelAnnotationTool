@@ -200,9 +200,9 @@ std::string BoundingBox::toXML(){
 			<ymin>"+std::to_string(_min_y)+"</ymin>\n\
 			<xmax>"+std::to_string(_max_x)+"</xmax>\n\
 			<ymax>"+std::to_string(_max_y)+"</ymax>\n\
+            <mask_r>"+std::to_string(_mask_color.red())+"</mask_r>\n\
+            <mask_g>"+std::to_string(_mask_color.green())+"</mask_g>\n\
+            <mask_b>"+std::to_string(_mask_color.blue())+"</mask_b>\n\
 		</bndbox>\n\
-        <mask_r>"+std::to_string(_mask_color.red())+"</mask_r>\n\
-        <mask_g>"+std::to_string(_mask_color.green())+"</mask_g>\n\
-        <mask_b>"+std::to_string(_mask_color.blue())+"</mask_b>\n\
     \t</object>\n";
 }

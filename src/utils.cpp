@@ -26,7 +26,7 @@ std::set<QColor> findUniqueColors(QImage const& src) {
 		for (int j = 0; j < img.cols; j++)
 		{
 			auto pixel = img.at<cv::Vec3b>(i,j);
-			QColor color = QColor(pixel[2], pixel[1], pixel[0]);
+			QColor color = QColor(pixel[2], pixel[ 1], pixel[0]);
 			unique.insert(color);
 		}
 	}

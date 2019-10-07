@@ -114,13 +114,31 @@ void ImageCanvas::parseXML(QString file_name){
         int max_x = boundbox_node.elementsByTagName("xmax").at(0).firstChild().toText().data().toInt();
         int min_y = boundbox_node.elementsByTagName("ymin").at(0).firstChild().toText().data().toInt();
         int max_y = boundbox_node.elementsByTagName("ymax").at(0).firstChild().toText().data().toInt();
-        box_list.push_back(BoundingBox(cv::Point(min_x,min_y),cv::Point(max_x, max_y),name.toStdString()));
+
+        int color_r = boundbox_node.elementsByTagName("mask_r").at(0).firstChild().toText().data().toInt();
+        int color_g = boundbox_node.elementsByTagName("mask_g").at(0).firstChild().toText().data().toInt();
+        int color_b = boundbox_node.elementsByTagName("mask_b").at(0).firstChild().toText().data().toInt();
+
+        auto bbox = BoundingBox(cv::Point(min_x,min_y),cv::Point(max_x, max_y),name.toStdString());
+        bbox.setMaskColor(QColor(color_r, color_g, color_b));
+
+        box_list.push_back(bbox);
     }
     return;
 }
 
 void ImageCanvas::smartMask() {
     std::cout << "Entering Smark Mask" << std::endl;
+
+    int idx = getSelectedBox();
+    
+    if (idx != -1)
+    {
+        for (auto bbox : box_list) {
+            bbox.unselect();
+        }
+    }
+
     //TODO: Performance improvement, could just compare buffers to see if changes have been made
     cv::Mat img = qImage2Mat(_smart_mask.color);
 
@@ -289,69 +307,35 @@ void ImageCanvas::mousePressEvent(QMouseEvent * e) {
     std::cout<<"clicked"<<p<<" operation:"<<_operation_mode<<" modifiers:"<<e->modifiers()<<std::endl;
 	if (e->button() == Qt::LeftButton) {
 		_button_is_pressed = true;
-        if(_operation_mode == BOX_SELECTED){
-            int idx = getSelectedBox();
-            if(idx == -1){
-                std::cout<<"no box selected"<<std::endl;
-                return;
-            }
+
+        int idx = getSelectedBox();
+        if (idx != -1) {
             std::cout<<"selected index"<<idx<<std::endl;
             redrawBoundingBox(idx);
-            _buffer_image = _image.copy();
-            if(box_list[idx].isWithinResizingArea(p)){
-                int corner_idx = box_list[idx].selectPoint(p);
-                cv::Point start_p = box_list[idx].getFourCorners()[corner_idx];
-                std::cout<<"resizing selecting corner"<<start_p<<std::endl;
-                start_x = p.x;
-                start_y = p.y;
-                _operation_mode = BOX_RESIZING;
-                drawMarkedBoundingBox(box_list[idx]);
-                return;
-            }else if(box_list[idx].isWithinBoundingBox(p)){
-                std::cout<<"operation moving"<<std::endl;
-                start_x = p.x;
-                start_y = p.y;
-                _operation_mode = BOX_MOVING;
-                drawMarkedBoundingBox(box_list[idx]);
-                return;
-            }else if(e->modifiers() == BBOX_MODIFIER){\
-                box_list[idx].unselect();
-                redrawBoundingBox();
-                _operation_mode = BOX_CREATING;
-                _startMarkingBoundingBox(e);
-            }else{
-                //unmark
-                std::cout<<"Finished changing box: " << std::to_string(idx) << " Realsize: " << box_list.size() << std::endl;
-                _op_manager->change_bbox(box_list[idx], idx);
-                box_list[idx].unselect();
-                drawBoundingBox(box_list[idx]);
-                _operation_mode = BOX_UNSELECTING;
-                return;
-            }
-        }else if(_operation_mode == DRAW_MODE){
-            if(FILL_IN_MODIFIER==e->modifiers()){
+        }
+
+        if (_operation_mode == DRAW_MODE) {
+            if(FILL_IN_MODIFIER==e->modifiers()) {
+                // FILL in Operation
                 _fill(e);
                 return;
-            }else if (BBOX_MODIFIER==e->modifiers() && _cid != -1){
+            } else if (BBOX_MODIFIER==e->modifiers() && _cid != -1) {
+                // Select BOX for modification
                 //check if its within range
                 for(int i =0; i< box_list.size();i++){
                     if(box_list[i].isWithinBoundingBox(getXYonImage(e))){
-                        _operation_mode = BOX_SELECTED;
                         box_list[i].select();
                         drawMarkedBoundingBox(box_list[i]);
                         return;
                     }
                 }
-                //else create box
-                _operation_mode = BOX_CREATING;
-                _startMarkingBoundingBox(e);
                 return;
-            }else{
+            } else {
                 _drawFillCircle(e);
                 return;
             }
         }
-	}else if(e->button() == Qt::RightButton){
+	} else if(e->button() == Qt::RightButton){
         
     }
 }
@@ -360,30 +344,8 @@ void ImageCanvas::mouseMoveEvent(QMouseEvent * e) {
 	_mouse_pos.setX(e->x());
 	_mouse_pos.setY(e->y());
     cv::Point cur_pt = getXYonImage(e);
-	if (_button_is_pressed){ 
-        std::cout<<"moved to "<<cur_pt<<std::endl;
-        if(_operation_mode == BOX_MOVING){
-            int x_diff = cur_pt.x - start_x;
-            int y_diff = cur_pt.y - start_y;
-            _image = _buffer_image.copy();
-            box_list[getSelectedBox()].move(x_diff, y_diff);//_drawBoundingBox(e);
-            start_x = cur_pt.x;
-            start_y = cur_pt.y;
-            drawMarkedBoundingBox(box_list[getSelectedBox()]);
-            box_list[getSelectedBox()].printBoxParam();
-        }else if(_operation_mode == BOX_RESIZING){
-            int x_diff = cur_pt.x - start_x;
-            int y_diff = cur_pt.y - start_y;
-            _image = _buffer_image.copy();
-            box_list[getSelectedBox()].resize(x_diff, y_diff);
-            start_x = cur_pt.x;
-            start_y = cur_pt.y;
-            drawMarkedBoundingBox(box_list[getSelectedBox()]);
-        }else if(_operation_mode == BOX_CREATING){
-            _drawBoundingBox(e);
-        }else{
-            _drawFillCircle(e);
-        }
+	if (_button_is_pressed) { 
+        _drawFillCircle(e);
     }
 	update();
 }
@@ -392,11 +354,6 @@ void ImageCanvas::reset(int operation){
     start_x =-1;
     start_y =-1;
     _operation_mode = operation;
-    if(operation == DRAW_MODE){
-        for(BoundingBox b: box_list){
-            b.unselect();
-        }
-    }
     redrawBoundingBox();
     update();
 }
@@ -407,24 +364,6 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
 		_button_is_pressed = false;
         if(_operation_mode == DRAW_MODE){
             _op_manager->save_draw();
-        }
-        if(_operation_mode == BOX_CREATING && this-> start_x > -1 && this-> start_y > -1){
-                BoundingBox b(cv::Point(start_x, start_y), getXYonImage(e),getObjectString());
-                if(b.getWidth()> 5 && b.getHeight()> 5){
-                    box_list.push_back(b);
-                    std::cout<<"creating bounding box "<< b.getMinMinPoint()<<b.getMaxMaxPoint()<<std::endl;
-                    _op_manager->create_bbox(b);
-                }
-                reset();
-        }
-        if(_operation_mode == BOX_MOVING || _operation_mode == BOX_RESIZING){
-            reset(BOX_SELECTED);
-            drawMarkedBoundingBox(box_list[getSelectedBox()]);
-        }
-        if(_operation_mode == BOX_UNSELECTING) {
-            reset();
-            _operation_mode = DRAW_MODE;
-
         }
         _ui->setStarAtNameOfTab(true);
 		_ui->undo_action->setEnabled(true);
@@ -441,8 +380,11 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
 				label = it.value();
 			}
 		}
-		if(label->item != NULL)
+
+		if(label->item != NULL) {
 			emit(_ui->list_label->currentItemChanged(label->item, NULL));
+        }
+
 		refresh();
 	}
 
@@ -467,21 +409,51 @@ void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
     int y = p.y;
 
     if (_pen_size > 0) {
-		_mask.drawFillCircle(x, y, _pen_size, _color);
-        _smart_mask.drawFillCircle(x, y, _pen_size, _mask.getSmartColorMask(_color, _instance_num));
+		_mask.drawFillCircle(x, y, _pen_size, getColorMask(false));
+        _smart_mask.drawFillCircle(x, y, _pen_size, getColorMask(true));
 	} else {
-		_mask.drawPixel(x, y, _color);
-        _smart_mask.drawPixel(x, y, _mask.getSmartColorMask(_color, _instance_num));
-	}  ImageMask        _watershed        ;
+		_mask.drawPixel(x, y, getColorMask(false));
+        _smart_mask.drawPixel(x, y, getColorMask(true));
+	}  
+
 	update();
+}
+
+ColorMask ImageCanvas::getColorMask(bool smart) {
+
+    ColorMask mask_color = _color;
+    ColorMask smart_color = mask_color;
+
+    int idx = getSelectedBox();
+
+    // If a box is selected, modify the drawing operation
+    if (idx != -1) {
+        QColor bbox_color = box_list[idx].getMaskColor();
+
+        int id = _ui->id_labels.getIdFromR(bbox_color.red());
+
+        mask_color.id = QColor(id, id, id);
+        mask_color.color = _ui->id_labels[id]->color;
+
+        smart_color.id = mask_color.id;
+        smart_color.color = bbox_color;
+    } else {
+        smart_color = _mask.getSmartColorMask(mask_color, _instance_num);
+    }
+
+    if (smart) {
+        return smart_color;
+    } else {
+        return mask_color;
+    }
 }
 
 void ImageCanvas::_fill(QMouseEvent *e){
     cv::Point p = getXYonImage(e);
     int x = p.x;
     int y = p.y;
-    _mask.fill(x, y, _color,_ui->id_labels);
-    _smart_mask.fill(x, y, _mask.getSmartColorMask(_color, _instance_num));
+    _mask.fill(x, y, getColorMask(false),_ui->id_labels);
+    _smart_mask.fill(x, y, getColorMask(true));
 }
 
 void ImageCanvas::_startMarkingBoundingBox(QMouseEvent *e){
@@ -545,8 +517,9 @@ void ImageCanvas::wheelEvent(QWheelEvent * event) {
 
 void ImageCanvas::keyPressEvent(QKeyEvent * event) {
 	if (event->key() == Qt::Key_Space) {
-		//emit(_ui->button_watershed->released());
-	}else if(event->key() == Qt::Key_Delete){
+
+        //emit(_ui->button_smart_mask->released());
+	} else if(event->key() == Qt::Key_Delete){
         if(_operation_mode == BOX_SELECTED){
             _operation_mode = DRAW_MODE;
             int i = getSelectedBox();

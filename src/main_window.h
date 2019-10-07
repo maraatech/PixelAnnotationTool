@@ -70,6 +70,7 @@ public slots:
 	void changeColor(QListWidgetItem*);
 	void saveConfigFile();
 	void loadConfigFile();
+	void loadConfig(QString file_path);
 	void runWatershed();
 	void runSmartMask();
     void swapView();

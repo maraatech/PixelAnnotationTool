@@ -45,6 +45,8 @@ public:
     std::string getObjectString();
     void saveAnnotation();
 
+    ColorMask getColorMask(bool smart = false);
+
 protected:
 	void mouseMoveEvent(QMouseEvent * event) override;
 	void mousePressEvent(QMouseEvent * event) override;

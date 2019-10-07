@@ -77,12 +77,14 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     
 	labels = defaulfLabels();
 
-	loadConfigLabels();
+	loadConfig(QCoreApplication::applicationDirPath() + "/../config.json");
 
 	connect(list_label, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changeLabel(QListWidgetItem*, QListWidgetItem*)));
 	connect(list_label, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(changeColor(QListWidgetItem*)));
 
     list_label->setEnabled(false);
+
+
 }
 
 void MainWindow::closeCurrentTab() {
@@ -392,11 +394,17 @@ void MainWindow::saveConfigFile() {
 
 void MainWindow::loadConfigFile() {
 	QString file = QFileDialog::getOpenFileName(this, tr("Open Config File"), QString(), tr("JSon file (*.json)"));
-	QFile open_file(file);
+	loadConfig(file);
+
+}
+
+void MainWindow::loadConfig(QString file_path) {
+	QFile open_file(file_path);
 	if (!open_file.open(QIODevice::ReadOnly)) {
 		qWarning("Couldn't open save file.");
 		return;
 	}
+
 	QJsonObject object;
 	QByteArray saveData = open_file.readAll();
 	QJsonDocument loadDoc(QJsonDocument::fromJson(saveData));
@@ -407,7 +415,6 @@ void MainWindow::loadConfigFile() {
 
 	loadConfigLabels();
 	update();
-
 }
 
 void MainWindow::on_actionAbout_triggered() {
