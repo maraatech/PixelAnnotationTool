@@ -62,17 +62,14 @@ void ImageCanvas::loadImage(const QString &filename) {
 	
 	_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_mask.png";
     _smart_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_smart_mask.png";
-	_watershed_file = file.dir().absolutePath()+ "/" + file.baseName() + "_watershed_mask.png";
     _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + ".xml";
     
-	_watershed = ImageMask(_image.size());
 	if (QFile(_mask_file).exists()) {
 		_mask = ImageMask(_mask_file,_ui->id_labels);
         _smart_mask = ImageMask(_image.size());
         _smart_mask.loadSmartMaskFile(_smart_mask_file);
         _instance_num = _smart_mask.countInstances();
         std::cout << "Found Unique Instances:" << _instance_num << std::endl;
-        //_ui->runWatershed(this);// button_watershed->released());
 		_ui->checkbox_manuel_mask->setChecked(true);
 	} else {
 		clearMask();
@@ -242,10 +239,6 @@ void ImageCanvas::paintEvent(QPaintEvent *event) {
 	if (!_mask.id.isNull() && _ui->checkbox_manuel_mask->isChecked()) {
 		painter.drawImage(QPoint(0, 0), _mask.color);
 	}
-		
-	if (!_watershed.id.isNull() && _ui->checkbox_watershed_mask->isChecked()) {
-		painter.drawImage(QPoint(0, 0), _watershed.color);
-	}
 
 	if (_mouse_pos.x() > 10 && _mouse_pos.y() > 10 && 
 		_mouse_pos.x() <= QLabel::size().width()-10 &&
@@ -373,14 +366,6 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
 		QColor color = _mask.id.pixel(_mouse_pos / _scale);
 		const LabelInfo * label = _ui->id_labels[color.red()];
 
-		if (!_watershed.id.isNull() && _ui->checkbox_watershed_mask->isChecked()) {
-			QColor color = QColor(_watershed.id.pixel(_mouse_pos / _scale));
-			QMap<int, const LabelInfo*>::const_iterator it = _ui->id_labels.find(color.red());
-			if (it != _ui->id_labels.end()) {
-				label = it.value();
-			}
-		}
-
 		if(label->item != NULL) {
 			emit(_ui->list_label->currentItemChanged(label->item, NULL));
         }
@@ -487,7 +472,6 @@ void ImageCanvas::redrawBoundingBox(int except_index){
 
 void ImageCanvas::clearMask() {
 	_mask = ImageMask(_image.size());
-	_watershed = ImageMask(_image.size());
     _smart_mask = ImageMask(_image.size());
 	repaint();
 }
@@ -536,10 +520,6 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
     }
 }
 
-void ImageCanvas::setWatershedMask(QImage watershed) {
-	_watershed.id = watershed;
-	idToColor(_watershed.id, _ui->id_labels, &_watershed.color);
-}
 
 void ImageCanvas::setImageMask(const ImageMask & mask) {
 	_mask = mask;
@@ -557,9 +537,6 @@ void ImageCanvas::setId(int id) {
 }
 
 void ImageCanvas::refresh() {
-//  if (!_watershed.id.isNull() && _ui->checkbox_watershed_mask->isChecked() ) {
-//		emit(_ui->button_watershed->released());
-//	}
 	update();
 }
 

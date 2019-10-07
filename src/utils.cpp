@@ -202,22 +202,6 @@ cv::Mat convertMat32StoRGBC3(const cv::Mat& mat) {
 	return dst;
 }
 
-QImage watershed(const QImage& qimage, const QImage & qmarkers_mask) {
-	cv::Mat image = qImage2Mat(qimage);
-	cv::Mat markers_mask = qImage2Mat(qmarkers_mask);
-	cv::Mat markers = cv::Mat::zeros(markers_mask.size(), CV_32S);
-	for (int y = 0; y < markers_mask.rows; y++) {
-		int* mark = markers.ptr<int>(y);
-		cv::Vec3b* mask = markers_mask.ptr<cv::Vec3b>(y);
-		for (int x = 0; x < markers_mask.cols; x++) {
-			mark[x] = mask[x][0];
-		}
-	}
-	cv::watershed(image, markers);
-	cv::Mat new_mask = convertMat32StoRGBC3(markers);
-	return mat2QImage(new_mask);
-}
-
 QImage removeBorder(const QImage & mask_id, const Id2Labels & labels, cv::Size win_size) {
 	QImage result = mask_id.copy();
 

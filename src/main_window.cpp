@@ -32,14 +32,12 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     clear_mask_action = new QAction(tr("&Clear Mask mask"), this);
     close_tab_action = new QAction(tr("&Close current tab"), this);
     open_dir_action = new QAction(tr("&Open directory"),this);
-    swap_action = new QAction(tr("&Swap check box Watershed"), this);
 	undo_action = new QAction(tr("&Undo"), this);
 	redo_action = new QAction(tr("&Redo"), this);
 	smart_mask_action->setShortcut(Qt::Key_Space);
 	undo_action->setShortcuts(QKeySequence::Undo);
 	redo_action->setShortcuts(QKeySequence::Redo);
 	save_action->setShortcut(Qt::CTRL+Qt::Key_S);
-    swap_action->setShortcut(Qt::CTRL + Qt::Key_Space);
     copy_mask_action->setShortcut(Qt::CTRL + Qt::Key_C);
     paste_mask_action->setShortcut(Qt::CTRL + Qt::Key_V);
     clear_mask_action->setShortcut(Qt::CTRL + Qt::Key_R);
@@ -48,7 +46,6 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 	undo_action->setEnabled(false);
 	redo_action->setEnabled(false);
 	smart_mask_action->setEnabled(true);
-
 	menuFile->addAction(save_action);
     menuFile->addAction(open_dir_action);
     menuEdit->addAction(close_tab_action);
@@ -57,13 +54,10 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
     menuEdit->addAction(copy_mask_action);
     menuEdit->addAction(paste_mask_action);
     menuEdit->addAction(clear_mask_action);
-    menuEdit->addAction(swap_action);
     menuTool->addAction(smart_mask_action);
 
 	tabWidget->clear();
-    
 	connect(button_smart_mask      , SIGNAL(released())                        , this, SLOT(runSmartMask()  ));
-    connect(swap_action           , SIGNAL(triggered())                       , this, SLOT(swapView()      ));
 	connect(actionOpen_config_file, SIGNAL(triggered())                       , this, SLOT(loadConfigFile()));
 	connect(actionSave_config_file, SIGNAL(triggered())                       , this, SLOT(saveConfigFile()));
     connect(close_tab_action      , SIGNAL(triggered())                       , this, SLOT(closeCurrentTab()));
@@ -73,18 +67,14 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 	connect(tabWidget             , SIGNAL(tabCloseRequested(int))            , this, SLOT(closeTab(int)   ));
 	connect(tabWidget             , SIGNAL(currentChanged(int))               , this, SLOT(updateConnect(int)));
     connect(tree_widget_img       , SIGNAL(itemClicked(QTreeWidgetItem *,int)), this, SLOT(treeWidgetClicked()));
-    connect(open_dir_action       , SIGNAL(triggered())                       , this, SLOT(on_actionOpenDir_triggered()));
-    
+    connect(open_dir_action       , SIGNAL(triggered())                       , this, SLOT(on_actionOpenDir_triggered())); 
 	labels = defaulfLabels();
 
 	loadConfig(QCoreApplication::applicationDirPath() + "/../config.json");
-
 	connect(list_label, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changeLabel(QListWidgetItem*, QListWidgetItem*)));
 	connect(list_label, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(changeColor(QListWidgetItem*)));
 
     list_label->setEnabled(false);
-
-
 }
 
 void MainWindow::closeCurrentTab() {
@@ -194,22 +184,6 @@ void MainWindow::changeLabel(QListWidgetItem* current, QListWidgetItem* previous
 	image_canvas->setId(labels[key].id);
 }
 
-void MainWindow::runWatershed(ImageCanvas * ic) {
-    QImage iwatershed = watershed(ic->getImage(), ic->getImageMask().id);
-    if (!checkbox_border_ws->isChecked()) {
-        iwatershed = removeBorder(iwatershed, id_labels);
-    }
-	ic->setWatershedMask(iwatershed);
-	checkbox_watershed_mask->setCheckState(Qt::CheckState::Checked);
-	ic->update();
-}
-
-void MainWindow::runWatershed() {
-    ImageCanvas * ic = image_canvas;
-    if( ic != NULL)
-        runWatershed(ic);
-}
-
 void MainWindow::runSmartMask() {
 	std::cout << "PRESSED" << std::endl;
 	ImageCanvas * ic = image_canvas;
@@ -237,15 +211,12 @@ void MainWindow::updateConnect(const ImageCanvas * ic) {
     connect(spinbox_scale, SIGNAL(valueChanged(double)), ic, SLOT(scaleChanged(double)));
     connect(spinbox_alpha, SIGNAL(valueChanged(double)), ic, SLOT(alphaChanged(double)));
     connect(spinbox_pen_size, SIGNAL(valueChanged(int)), ic, SLOT(setSizePen(int)));
-	//connect(checkbox_watershed_mask, SIGNAL(clicked()), ic, SLOT(update()));
 	connect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
 	connect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
 	connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
 	connect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
 	connect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
 	connect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
-    connect(checkbox_border_ws, SIGNAL(clicked()), this, SLOT(runWatershed()));
-    
 }
 
 void MainWindow::allDisconnnect(const ImageCanvas * ic) {
@@ -253,14 +224,12 @@ void MainWindow::allDisconnnect(const ImageCanvas * ic) {
     disconnect(spinbox_scale, SIGNAL(valueChanged(double)), ic, SLOT(scaleChanged(double)));
     disconnect(spinbox_alpha, SIGNAL(valueChanged(double)), ic, SLOT(alphaChanged(double)));
     disconnect(spinbox_pen_size, SIGNAL(valueChanged(int)), ic, SLOT(setSizePen(int)));
-    //disconnect(checkbox_watershed_mask, SIGNAL(clicked()), ic, SLOT(update()));
     disconnect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
     disconnect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
     disconnect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
     disconnect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
     disconnect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
     disconnect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
-    disconnect(checkbox_border_ws, SIGNAL(clicked()), this, SLOT(runWatershed()));
 }
 
 ImageCanvas * MainWindow::newImageCanvas() {
@@ -453,11 +422,6 @@ ImageCanvas * MainWindow::getCurrentImageCanvas() {
     ImageCanvas * ic = getImageCanvas(index);
     return ic;
     
-}
-
-void MainWindow::swapView() {
-    //checkbox_watershed_mask->setCheckState(checkbox_watershed_mask->checkState() == Qt::CheckState::Checked ? Qt::CheckState::Unchecked : Qt::CheckState::Checked);
-    update();
 }
 
 void MainWindow::update() {

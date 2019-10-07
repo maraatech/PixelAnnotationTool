@@ -21,7 +21,6 @@ QColor invColor(const QColor & color);
 QColor readableColor(const QColor & color);
 QVector<QColor> colorMap(int size);
 cv::Mat convertMat32StoRGBC3(const cv::Mat &mat);
-QImage watershed(const QImage& qimage, const QImage & qmarkers_mask);
 QImage removeBorder(const QImage & mask_id, const Id2Labels & labels, cv::Size win_size = cv::Size(3,3));
 bool isFullZero(const QImage& image);
 int rgbToInt(uchar r, uchar g, uchar b);

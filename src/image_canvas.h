@@ -31,7 +31,6 @@ public:
     QImage getImage() const { return _image; }
     std::vector<BoundingBox>& getBoxList() { return box_list; }
 
-	void setWatershedMask(QImage watershed);
 	void refresh();
 	void updateMaskColor(const Id2Labels & labels) { _mask.updateColor(labels); }
 	void loadImage(const QString &file);
@@ -86,12 +85,10 @@ private:
 	QImage           _buffer_image     ;
 	ImageMask        _smart_mask       ;
 	ImageMask        _mask             ;
-	ImageMask        _watershed        ;
 	QPoint           _mouse_pos        ;
 	QString          _img_file         ;
 	QString          _mask_file        ;
 	QString          _smart_mask_file  ;
-	QString          _watershed_file   ;
     QString          _annotation_file  ;
 	ColorMask        _color            ;
 	int              _instance_num     ;

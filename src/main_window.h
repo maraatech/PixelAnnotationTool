@@ -52,7 +52,6 @@ public:
     QAction        * close_tab_action;
 	QAction        * undo_action  ;
 	QAction        * smart_mask_action ;
-    QAction        * swap_action;
 	QAction        * redo_action  ;
 	QAction        * open_dir_action  ;
 	QString          curr_open_dir;
@@ -61,7 +60,6 @@ public:
 	QString currentFile() const;
 	void updateConnect(const ImageCanvas * ic);
     void allDisconnnect(const ImageCanvas * ic);
-    void runWatershed(ImageCanvas * ic);
     void setStarAtNameOfTab(bool star);
 
 public slots:
@@ -71,9 +69,7 @@ public slots:
 	void saveConfigFile();
 	void loadConfigFile();
 	void loadConfig(QString file_path);
-	void runWatershed();
 	void runSmartMask();
-    void swapView();
 	void on_tree_widget_img_currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *);
 	void on_actionOpenDir_triggered();
 	//void on_actionOpen_jsq_triggered();
