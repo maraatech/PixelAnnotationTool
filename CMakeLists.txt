@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.2)
 project(PixelAnnotationTool)
 
+# Substitute the correct paths into the following variables.
+set(CMAKE_PREFIX_PATH "/home/anyone/opencv/build" CACHE STRING "Path to opencv build folder containing OpenCVConfig.cmake")
+set(QT5_DIR "/home/anyone/Qt5.9.1/5.9.1/gcc_64/lib/cmake" CACHE STRING "Path to QT5Xml folder containing Qt5XmlConfigVersion.cmake")
+set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-8.0" CACHE STRING "Path to cuda version 8.0")
 
 
-set(QT5_DIR "~/Qt5.9.1/5.9.1/msvc2015_64/lib/cmake" CACHE STRING "Additional search paths for QT5")
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 11)
 
 if(WIN32)
 	if(CMAKE_CL_64)
