@@ -33,7 +33,23 @@ std::set<QColor> findUniqueColors(cv::Mat const& img) {
 	return unique;
 }
 
-BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name) {
+BoundingBox findBoundingBox(cv::Mat const& img, const Id2Labels& id_label) {
+
+    // Determine Target Color and Class name
+    // Assumes only one other unique id, other than background (0,0,0)
+    auto unique = findUniqueColors(img);
+    unique.erase(QColor(0, 0, 0));
+
+    int n = unique.size();
+
+    if (n > 1)
+    {
+        std::cout << "ERROR: Multiple classes labeled on this instance" << std::endl;
+    }
+
+    QColor target = *unique.begin();
+    std::string name = id_label[target.red()]->name.toStdString();
+
 	// (x1, y1) -------> (x2, y2)
 	// Where X = Cols and Y = Rows
 
@@ -96,7 +112,10 @@ BoundingBox findBoundingBox(cv::Mat const& img, QColor target, std::string name)
 	}
 	finish_right_scan:
 
-	return BoundingBox(minmin, maxmax, name);
+    auto bbox = BoundingBox(minmin, maxmax, name);
+    bbox.setMaskColor(target);
+
+    return bbox;
 }
 
 QImage idToColor(const QImage &image_id, const Id2Labels& id_label) {

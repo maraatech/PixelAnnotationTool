@@ -79,8 +79,8 @@ void ImageCanvas::loadImage(const QString &filename) {
     }
 
     parseXML(_annotation_file);
-    _ui->undo_action->setEnabled(false);
-    _ui->redo_action->setEnabled(false);
+    _ui->undo_action->setEnabled(true);
+    _ui->redo_action->setEnabled(true);
 
     setPixmap(QPixmap::fromImage(_image));
     resize(_scale *_image.size());
@@ -134,27 +134,11 @@ void ImageCanvas::smartMask() {
 
 //    cv::waitKey(0);
 
+    _prev_mask.setMask(_mask.getMask().clone());
     mask_history.push_back(_top_mask);
 
-
-    // Get ids in top level
-    auto unique = findUniqueColors(qImage2Mat(_top_mask.id));
-    unique.erase(QColor(0, 0, 0));
-
-    int n = unique.size();
-    if (n > 1)
-    {
-        std::cout << "ERROR: Multiple classes labeled on this instance" << std::endl;
-    }
-
-    // First unique id
-
-    int id = unique.begin()->red();
-    auto label = _ui->id_labels[id]->name.toStdString();
-
     // Add bounding box
-    BoundingBox bbox = findBoundingBox(qImage2Mat(_top_mask.id), *unique.begin(), label);
-    bbox.setMaskColor(*unique.begin());
+    BoundingBox bbox = findBoundingBox(qImage2Mat(_top_mask.id), _ui->id_labels);
     box_list.push_back(bbox);
     redrawBoundingBox();
 
@@ -550,7 +534,8 @@ void ImageCanvas::wheelEvent(QWheelEvent * event) {
 }
 
 void ImageCanvas::keyPressEvent(QKeyEvent * event) {
-    if (event->key() == Qt::Key_Space) {
+    if (event->key() == Qt::Key_Enter) {
+        regenerate();
 
 
         //emit(_ui->button_smart_mask->released());
@@ -569,6 +554,75 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
     }
 }
 
+//TODO: Optimize for removing last only
+void ImageCanvas::delete_last_layer()
+{
+    if (mask_history.size() == 0)
+    {
+        return;
+    }
+
+    delete_stack.push(mask_history.back());
+    mask_history.pop_back();
+
+    regenerate();
+    redrawBoundingBox();
+    update();
+}
+
+void ImageCanvas::restore_last_layer()
+{
+    if (delete_stack.empty())
+    {
+        return;
+    }
+
+    _top_mask = delete_stack.top();
+    smartMask();
+    delete_stack.pop();
+
+    regenerate();
+    redrawBoundingBox();
+    update();
+}
+
+void ImageCanvas::regenerate() {
+    box_list.clear();
+    clearMask();
+    // Might have to set image here
+    cv::Mat id_mat = qImage2Mat(_mask.id);
+    cv::Mat color_mat = qImage2Mat(_mask.color);
+    for (auto m : mask_history)
+    {
+        cv::Mat img_id = qImage2Mat(m.id);
+        cv::Mat img_color = qImage2Mat(m.color);
+
+        // Add BBOX
+
+        BoundingBox bbox = findBoundingBox(img_id, _ui->id_labels);
+        box_list.push_back(bbox);
+
+        // Layer masks
+
+        for (int i = 0; i < img_id.rows; i++)
+        {
+            for (int j = 0; j < img_id.cols; j++)
+            {
+                auto pixel = id_mat.at<cv::Vec3b>(i,j);
+                if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0)
+                {
+                    id_mat.at<cv::Vec3b>(i,j) = img_id.at<cv::Vec3b>(i,j);
+                    color_mat.at<cv::Vec3b>(i,j) = img_color.at<cv::Vec3b>(i,j);
+                }
+            }
+        }
+    }
+
+    _mask.id = mat2QImage(id_mat);
+    _mask.color = mat2QImage(color_mat);
+    redrawBoundingBox();
+    update();
+}
 
 void ImageCanvas::setImageMask(const ImageMask & mask) {
     _mask = mask;
@@ -591,6 +645,8 @@ void ImageCanvas::refresh() {
 
 
 void ImageCanvas::undo() {
+    delete_last_layer();
+    return;
     if (_operation_mode == DRAW_MODE) {
         _op_manager->undo();
     }
@@ -600,6 +656,8 @@ void ImageCanvas::undo() {
 }
 
 void ImageCanvas::redo() {
+    restore_last_layer();
+    return;
     if (_operation_mode == DRAW_MODE) {
         _op_manager->redo();
     }

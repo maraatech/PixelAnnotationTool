@@ -45,6 +45,8 @@ public:
     std::string getObjectString();
     void saveAnnotation();
 
+    void regenerate();
+
     ColorMask getColorMask(bool smart = false);
 
 protected:
@@ -78,6 +80,9 @@ private:
     cv::Point getXYonImage(int x_gui, int y_gui);
     void parseXML(QString file_name);
 
+    void delete_last_layer();
+    void restore_last_layer();
+
     QScrollArea     *_scroll_parent    ;
     double           _scale            ;
     double           _alpha            ;
@@ -100,8 +105,9 @@ private:
 
     std::vector<BoundingBox> box_list;
     std::vector<ImageMask> mask_history;
-    ImageMask _visible_mask;
+    std::stack<ImageMask> delete_stack;
     ImageMask _top_mask;
+    ImageMask _prev_mask;
     
     int _cid =-1;
 

@@ -43,8 +43,8 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(par
     clear_mask_action->setShortcut(Qt::CTRL + Qt::Key_R);
     close_tab_action->setShortcut(Qt::CTRL + Qt::Key_W);
     open_dir_action->setShortcut(Qt::CTRL + Qt::Key_O);
-    undo_action->setEnabled(false);
-    redo_action->setEnabled(false);
+    undo_action->setEnabled(true);
+    redo_action->setEnabled(true);
     smart_mask_action->setEnabled(true);
     menuFile->addAction(save_action);
     menuFile->addAction(open_dir_action);
