@@ -20,7 +20,7 @@ BoundingBox::BoundingBox(cv::Point orig_point, cv::Point end_point,std::string n
     }else{
         this->_min_y = end_point.y;
         this->_max_y = orig_point.y;
-    } 
+    }
     this->_id = generate_hex(6);
     this->_object_name = name;
 }
@@ -65,7 +65,7 @@ void BoundingBox::move(int x_diff, int y_diff){
  * 1 = maxmin
  * 2 = minmax
  * 3 = maxmax
- *///////////////////////////////////////  
+ *///////////////////////////////////////
 
 
 void BoundingBox::resize(int x_diff, int y_diff){
@@ -81,7 +81,7 @@ void BoundingBox::resize(int x_diff, int y_diff){
     }else if(selected_corner ==3){
         this->_min_x = this->_min_x+x_diff;
         this->_min_y = this->_min_y+y_diff;
-    }    
+    }
 }
 
 void BoundingBox::select(){
@@ -121,7 +121,7 @@ int BoundingBox::selectPoint(cv::Point p){
     for(int i =0; i<list.size();i++){
         cv::Point corner_p = list[i];
         if(distance(corner_p,p)<MIN_DIST){
-            selected_corner = 3- i; 
+            selected_corner = 3- i;
             return selected_corner;
         }
     }
@@ -191,18 +191,18 @@ void BoundingBox::printBoxParam(){
 
 std::string BoundingBox::toXML(){
     return "\t<object>\n\
-		<name>"+_object_name+"</name>\n\
-		<pose>Unspecified</pose>\n\
-		<truncated>0</truncated>\n\
-		<difficult>0</difficult>\n\
-		<bndbox>\n\
-			<xmin>"+std::to_string(_min_x)+"</xmin>\n\
-			<ymin>"+std::to_string(_min_y)+"</ymin>\n\
-			<xmax>"+std::to_string(_max_x)+"</xmax>\n\
-			<ymax>"+std::to_string(_max_y)+"</ymax>\n\
+            <name>"+_object_name+"</name>\n\
+            <pose>Unspecified</pose>\n\
+            <truncated>0</truncated>\n\
+            <difficult>0</difficult>\n\
+            <bndbox>\n\
+            <xmin>"+std::to_string(_min_x)+"</xmin>\n\
+            <ymin>"+std::to_string(_min_y)+"</ymin>\n\
+            <xmax>"+std::to_string(_max_x)+"</xmax>\n\
+            <ymax>"+std::to_string(_max_y)+"</ymax>\n\
             <mask_r>"+std::to_string(_mask_color.red())+"</mask_r>\n\
             <mask_g>"+std::to_string(_mask_color.green())+"</mask_g>\n\
             <mask_b>"+std::to_string(_mask_color.blue())+"</mask_b>\n\
-		</bndbox>\n\
-    \t</object>\n";
+            </bndbox>\n\
+            \t</object>\n";
 }

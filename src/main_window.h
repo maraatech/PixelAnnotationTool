@@ -30,56 +30,56 @@ public:
     MainWindow(QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
 private:
-	
-	void loadConfigLabels();
-	ImageCanvas * newImageCanvas();
-	int getImageCanvas(QString name, ImageCanvas *ic) ;
+
+    void loadConfigLabels();
+    ImageCanvas * newImageCanvas();
+    int getImageCanvas(QString name, ImageCanvas *ic) ;
     ImageCanvas * getImageCanvas(int index);
     ImageCanvas * getCurrentImageCanvas();
     ImageMask _tmp;
 
 public:
-	ImageCanvas   *  image_canvas ;
+    ImageCanvas   *  image_canvas ;
     //std::vector<ImageCanvas*> _image_canvas;
-	//QScrollArea   *  scroll_area  ;
+    //QScrollArea   *  scroll_area  ;
 
-	Name2Labels      labels       ;
-	Id2Labels        id_labels    ;
-	QAction        * save_action  ;
+    Name2Labels      labels       ;
+    Id2Labels        id_labels    ;
+    QAction        * save_action  ;
     QAction        * copy_mask_action;
     QAction        * paste_mask_action;
     QAction        * clear_mask_action;
     QAction        * close_tab_action;
-	QAction        * undo_action  ;
-	QAction        * smart_mask_action ;
-	QAction        * redo_action  ;
-	QAction        * open_dir_action  ;
-	QString          curr_open_dir;
+    QAction        * undo_action  ;
+    QAction        * smart_mask_action ;
+    QAction        * redo_action  ;
+    QAction        * open_dir_action  ;
+    QString          curr_open_dir;
 public:
-	QString currentDir() const;
-	QString currentFile() const;
-	void updateConnect(const ImageCanvas * ic);
+    QString currentDir() const;
+    QString currentFile() const;
+    void updateConnect(const ImageCanvas * ic);
     void allDisconnnect(const ImageCanvas * ic);
     void setStarAtNameOfTab(bool star);
 
 public slots:
 
-	void changeLabel(QListWidgetItem*, QListWidgetItem*);
-	void changeColor(QListWidgetItem*);
-	void saveConfigFile();
-	void loadConfigFile();
-	void loadConfig(QString file_path);
-	void runSmartMask();
-	void on_tree_widget_img_currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *);
-	void on_actionOpenDir_triggered();
-	//void on_actionOpen_jsq_triggered();
-	void on_actionAbout_triggered();
-	void closeTab(int index);
+    void changeLabel(QListWidgetItem*, QListWidgetItem*);
+    void changeColor(QListWidgetItem*);
+    void saveConfigFile();
+    void loadConfigFile();
+    void loadConfig(QString file_path);
+    void runSmartMask();
+    void on_tree_widget_img_currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *);
+    void on_actionOpenDir_triggered();
+    //void on_actionOpen_jsq_triggered();
+    void on_actionAbout_triggered();
+    void closeTab(int index);
     void closeCurrentTab();
     void copyMask();
     void pasteMask();
     void clearMask();
-	void updateConnect(int index);
+    void updateConnect(int index);
     void treeWidgetClicked();
     void onLabelShortcut(int row);
     void update();

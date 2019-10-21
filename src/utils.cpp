@@ -109,11 +109,13 @@ QImage idToColor(const QImage &image_id, const Id2Labels& id_label) {
 void idToColor(const QImage &image_id, const Id2Labels& id_label, QImage *result) {
 	int id = 0;
 	uchar * pix;
+
 	for (int y = 0; y < image_id.height(); y++) {
 		const uchar * line_in = image_id.scanLine(y);
 		uchar * line_out = result->scanLine(y);
 		for (int x = 0; x < image_id.width()*3; x+=3) {
 			int id = line_in[x];
+	
 			QMap<int, const LabelInfo*>::const_iterator it = id_label.find(id);
 			if (it != id_label.end()) {
 				pix = &line_out[x];

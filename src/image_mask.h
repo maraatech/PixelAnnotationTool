@@ -29,13 +29,12 @@ struct MaskDiff {
 };
 
 struct ImageMask {
-	QImage id;
-	QImage color;
-    cv::Mat _buffer;
-    
-	ImageMask();
-	ImageMask(const QString &file, Id2Labels id_labels);
-	ImageMask(QSize s);
+    QImage id;
+    QImage color;
+
+    ImageMask();
+    ImageMask(const QString &file, Id2Labels id_labels);
+    ImageMask(QSize s);
 
     Mask getMask();
     void setMask(Mask mask);
@@ -43,15 +42,13 @@ struct ImageMask {
     int loadSmartMaskFile(const QString &file);
     int countInstances();
     ColorMask getSmartColorMask(ColorMask cm, int instance_num);
-	void drawFillCircle(int x, int y, int pen_size, ColorMask cm);
-	void drawPixel(int x, int y, ColorMask cm);
-	void updateColor(const Id2Labels & labels);
-	void exchangeLabel(int x, int y, const Id2Labels & id_labels, ColorMask cm);
+    void drawFillCircle(int x, int y, int pen_size, ColorMask cm);
+    void drawPixel(int x, int y, ColorMask cm);
+    void updateColor(const Id2Labels & labels);
+    void exchangeLabel(int x, int y, const Id2Labels & id_labels, ColorMask cm);
     void fill(int x, int y, ColorMask cm, const Id2Labels & id_labels);
     void fill(int x, int y, ColorMask cm);
     void fillPolygon(cv::Mat& buffer, cv::Point point);
-    void createBuffer();
-    void destroyBuffer();
     cv::Scalar getColor(QColor& color);
     void createBoundingBox(int x, int y);
     void drawBoundingBox(int orig_x, int orig_y, int x, int y);

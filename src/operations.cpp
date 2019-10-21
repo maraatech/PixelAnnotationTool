@@ -24,12 +24,12 @@ void DrawOperation::redo() {
 }
 
 void SmartMaskOperation::undo() {
-	_canvas->setBoundingBoxList(_before);
+    _canvas->setBoxList(_before);
 	_canvas->redrawBoundingBox();
 }
 
 void SmartMaskOperation::redo() {
-	_canvas->setBoundingBoxList(_after);
+    _canvas->setBoxList(_after);
 	_canvas->redrawBoundingBox();
 }
 

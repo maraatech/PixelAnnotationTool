@@ -9,18 +9,18 @@
 
 ImageCanvas::ImageCanvas(MainWindow *ui) :
     QLabel() ,
-	_ui(ui){
+    _ui(ui){
 
     _scroll_parent = new QScrollArea(ui);
     setParent(_scroll_parent);
-	resize(800,600);
-	_scale = _ui->spinbox_scale->value();
-	_alpha = _ui->spinbox_alpha->value();
-	_pen_size = _ui->spinbox_pen_size->value();
-	_initPixmap();
-	setScaledContents(true);
-	setMouseTracking(true);
-	_button_is_pressed = false;
+    resize(800,600);
+    _scale = _ui->spinbox_scale->value();
+    _alpha = _ui->spinbox_alpha->value();
+    _pen_size = _ui->spinbox_pen_size->value();
+    _initPixmap();
+    setScaledContents(true);
+    setMouseTracking(true);
+    _button_is_pressed = false;
 
     _scroll_parent->setBackgroundRole(QPalette::Dark);
     _scroll_parent->setWidget(this);
@@ -35,51 +35,55 @@ ImageCanvas::~ImageCanvas() {
 }
 
 bool ImageCanvas::isNotSaved() { 
-    return _op_manager->num_ops() > 0; 
+    return _op_manager->num_ops() > 0;
 }
 
 void ImageCanvas::_initPixmap() {
-	QPixmap newPixmap = QPixmap(width(), height());
-	newPixmap.fill(Qt::white);
-	QPainter painter(&newPixmap);
-	const QPixmap * p = pixmap();
-	if (p != NULL)
-		painter.drawPixmap(0, 0, *pixmap());
-	painter.end();
-	setPixmap(newPixmap);
+    QPixmap newPixmap = QPixmap(width(), height());
+    newPixmap.fill(Qt::white);
+    QPainter painter(&newPixmap);
+    const QPixmap * p = pixmap();
+    if (p != NULL)
+        painter.drawPixmap(0, 0, *pixmap());
+    painter.end();
+    setPixmap(newPixmap);
 }
 
 void ImageCanvas::loadImage(const QString &filename) {
-	if (!_image.isNull() )
-		saveMask();
+    if (!_image.isNull() )
+        saveMask();
 
-	_img_file = filename;
-	QFileInfo file(_img_file);
-	if (!file.exists()) return;
+    _img_file = filename;
+    QFileInfo file(_img_file);
 
-	_image = mat2QImage(cv::imread(_img_file.toStdString()));
+    if (!file.exists()) return;
+
+    _image = mat2QImage(cv::imread(_img_file.toStdString()));
     _orig_image = _image.copy();
-	
-	_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_mask.png";
+
+    _mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_color_mask.png";
     _smart_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_smart_mask.png";
-    _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + ".xml";
-    
-	if (QFile(_mask_file).exists()) {
-		_mask = ImageMask(_mask_file,_ui->id_labels);
+    _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + "_bbox.xml";
+
+    if (QFile(_mask_file).exists()) {
+        _mask = ImageMask(_mask_file,_ui->id_labels);
         _smart_mask = ImageMask(_image.size());
         _smart_mask.loadSmartMaskFile(_smart_mask_file);
+        _visible_mask = ImageMask(_image.size());
+
         _instance_num = _smart_mask.countInstances();
         std::cout << "Found Unique Instances:" << _instance_num << std::endl;
-		_ui->checkbox_manuel_mask->setChecked(true);
-	} else {
-		clearMask();
-	}
+        _ui->checkbox_manuel_mask->setChecked(true);
+    } else {
+        clearMask();
+    }
+
     parseXML(_annotation_file);
-	_ui->undo_action->setEnabled(false);
-	_ui->redo_action->setEnabled(false);
-    
-	setPixmap(QPixmap::fromImage(_image));
-	resize(_scale *_image.size());
+    _ui->undo_action->setEnabled(false);
+    _ui->redo_action->setEnabled(false);
+
+    setPixmap(QPixmap::fromImage(_image));
+    resize(_scale *_image.size());
     redrawBoundingBox();
 }
 
@@ -172,10 +176,10 @@ void ImageCanvas::smartMask() {
 
 
 void ImageCanvas::saveMask() {
-	if (isFullZero(_mask.id))
-		return;
+    if (isFullZero(_mask.id))
+        return;
 
-	_mask.id.save(_mask_file);
+    _mask.id.save(_mask_file);
     QFileInfo file(_img_file);
 
     QString color_file = file.dir().absolutePath() + "/" + file.baseName() + "_color_mask.png";
@@ -189,22 +193,22 @@ void ImageCanvas::saveAnnotation(){
     QFileInfo file(_img_file);
     //create text
     std::string text ="<annotation>\n\
-	<folder>0</folder>\n\
-	<filename>"+ file.baseName().toStdString()+"</filename>\n\
-	<path>"+file.dir().absolutePath().toStdString() + "/" + file.baseName().toStdString()+"</path>\n\
-	<source>\n\
-	\t<database>Unknown</database>\n\
-	</source>\n\
-	<size>\n\
-	\t<width>"+std::to_string(width())+"</width>\n\
-	\t<height>"+std::to_string(height())+"</height>\n\
-	\t<depth>3</depth>\n\
-	</size>\n\
-    <segmented>0</segmented>\n";
-    for(BoundingBox b:box_list){
-        text+=b.toXML();
-    }
-    text = text+ "\n</annotation>";
+            <folder>0</folder>\n\
+            <filename>"+ file.baseName().toStdString()+"</filename>\n\
+            <path>"+file.dir().absolutePath().toStdString() + "/" + file.baseName().toStdString()+"</path>\n\
+            <source>\n\
+            \t<database>Unknown</database>\n\
+            </source>\n\
+            <size>\n\
+            \t<width>"+std::to_string(width())+"</width>\n\
+            \t<height>"+std::to_string(height())+"</height>\n\
+            \t<depth>3</depth>\n\
+            </size>\n\
+            <segmented>0</segmented>\n";
+            for(BoundingBox b:box_list){
+            text+=b.toXML();
+}
+            text = text+ "\n</annotation>";
     std::string file_name = file.dir().absolutePath().toStdString() + "/xml/"+file.baseName().toStdString()+"_bbox.xml";
     std::ofstream out(file_name);
     out << text;
@@ -213,41 +217,41 @@ void ImageCanvas::saveAnnotation(){
 }
 
 void ImageCanvas::scaleChanged(double scale) {
-	_scale  = scale ;
-	resize(_scale * _image.size());
-	repaint();
+    _scale  = scale ;
+    resize(_scale * _image.size());
+    repaint();
 }
 
 void ImageCanvas::alphaChanged(double alpha) {
-	_alpha = alpha;
-	repaint();
+    _alpha = alpha;
+    repaint();
 }
 
 void ImageCanvas::paintEvent(QPaintEvent *event) {
-	QPainter painter(this);
-	painter.setRenderHint(QPainter::Antialiasing, false);
-	QRect rect = painter.viewport();
-	QSize size = _scale * _image.size();
-	if (size != _image.size()) {
-		rect.size().scale(size, Qt::KeepAspectRatio);
-		painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
-		painter.setWindow(pixmap()->rect());
-	}
-	painter.drawImage(QPoint(0, 0), _image);
-	painter.setOpacity(_alpha);
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    QRect rect = painter.viewport();
+    QSize size = _scale * _image.size();
+    if (size != _image.size()) {
+        rect.size().scale(size, Qt::KeepAspectRatio);
+        painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
+        painter.setWindow(pixmap()->rect());
+    }
+    painter.drawImage(QPoint(0, 0), _image);
+    painter.setOpacity(_alpha);
 
-	if (!_mask.id.isNull() && _ui->checkbox_manuel_mask->isChecked()) {
-		painter.drawImage(QPoint(0, 0), _mask.color);
-	}
+    if (!_mask.id.isNull() && _ui->checkbox_manuel_mask->isChecked()) {
+        painter.drawImage(QPoint(0, 0), _mask.color);
+    }
 
-	if (_mouse_pos.x() > 10 && _mouse_pos.y() > 10 && 
-		_mouse_pos.x() <= QLabel::size().width()-10 &&
-		_mouse_pos.y() <= QLabel::size().height()-10) {
-		painter.setBrush(QBrush(_color.color));
-		painter.setPen(QPen(QBrush(_color.color), 1.0));
-		painter.drawEllipse(_mouse_pos.x() / _scale - _pen_size / 2, _mouse_pos.y() / _scale - _pen_size / 2, _pen_size, _pen_size);
-		painter.end();
-	}
+    if (_mouse_pos.x() > 10 && _mouse_pos.y() > 10 &&
+            _mouse_pos.x() <= QLabel::size().width()-10 &&
+            _mouse_pos.y() <= QLabel::size().height()-10) {
+        painter.setBrush(QBrush(_color.color));
+        painter.setPen(QPen(QBrush(_color.color), 1.0));
+        painter.drawEllipse(_mouse_pos.x() / _scale - _pen_size / 2, _mouse_pos.y() / _scale - _pen_size / 2, _pen_size, _pen_size);
+        painter.end();
+    }
 }
 
 cv::Point ImageCanvas::getXYonImage(QMouseEvent *e){
@@ -258,12 +262,12 @@ cv::Point ImageCanvas::getXYonImage(int x_gui, int y_gui){
     int x =0;
     int y =0;
     if (_pen_size > 0) {
-		x = x_gui / _scale - _pen_size / 2;
-		y = y_gui / _scale - _pen_size / 2;
-	} else {
-		x = (x_gui+0.5) / _scale ;
-		y = (y_gui+0.5) / _scale ;
-	}
+        x = x_gui / _scale - _pen_size / 2;
+        y = y_gui / _scale - _pen_size / 2;
+    } else {
+        x = (x_gui+0.5) / _scale ;
+        y = (y_gui+0.5) / _scale ;
+    }
     return cv::Point(x,y);
 }
 
@@ -295,18 +299,17 @@ void ImageCanvas::drawMarkedBoundingBox(BoundingBox b){
 }
 
 void ImageCanvas::mousePressEvent(QMouseEvent * e) {
-	setFocus();
+    setFocus();
     cv::Point p = getXYonImage(e);
     std::cout<<"clicked"<<p<<" operation:"<<_operation_mode<<" modifiers:"<<e->modifiers()<<std::endl;
-	if (e->button() == Qt::LeftButton) {
-		_button_is_pressed = true;
+    if (e->button() == Qt::LeftButton) {
+        _button_is_pressed = true;
 
         int idx = getSelectedBox();
         if (idx != -1) {
             std::cout<<"selected index"<<idx<<std::endl;
-            redrawBoundingBox(idx);
+            redrawBoundingBox();
         }
-
         if (_operation_mode == DRAW_MODE) {
             if(FILL_IN_MODIFIER==e->modifiers()) {
                 // FILL in Operation
@@ -315,12 +318,21 @@ void ImageCanvas::mousePressEvent(QMouseEvent * e) {
             } else if (BBOX_MODIFIER==e->modifiers() && _cid != -1) {
                 // Select BOX for modification
                 //check if its within range
+                std::vector<int> select_indexes = {};
                 for(int i =0; i< box_list.size();i++){
-                    if(box_list[i].isWithinBoundingBox(getXYonImage(e))){
-                        box_list[i].select();
-                        drawMarkedBoundingBox(box_list[i]);
-                        return;
+                    if(box_list[i].isWithinBoundingBox(getXYonImage(e))) {
+                        select_indexes.push_back(i);
                     }
+                }
+
+                if (select_indexes.empty()) {
+                    _continous_click = 0;
+                } else
+                {
+                    int index = select_indexes[_continous_click % select_indexes.size()];
+                    box_list[index].select();
+                    drawMarkedBoundingBox(box_list[index]);
+                    _continous_click++;
                 }
                 return;
             } else {
@@ -328,19 +340,20 @@ void ImageCanvas::mousePressEvent(QMouseEvent * e) {
                 return;
             }
         }
-	} else if(e->button() == Qt::RightButton){
+    } else if(e->button() == Qt::RightButton) {
+        // Noop for right button at the moment
         
     }
 }
 
 void ImageCanvas::mouseMoveEvent(QMouseEvent * e) {
-	_mouse_pos.setX(e->x());
-	_mouse_pos.setY(e->y());
+    _mouse_pos.setX(e->x());
+    _mouse_pos.setY(e->y());
     cv::Point cur_pt = getXYonImage(e);
-	if (_button_is_pressed) { 
+    if (_button_is_pressed) {
         _drawFillCircle(e);
     }
-	update();
+    update();
 }
 
 void ImageCanvas::reset(int operation){
@@ -352,56 +365,57 @@ void ImageCanvas::reset(int operation){
 }
 
 void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
-	if(e->button() == Qt::LeftButton) {
+    if(e->button() == Qt::LeftButton) {
         std::cout<<"mouse released"<<getXYonImage(e)<<std::endl;
-		_button_is_pressed = false;
+        _button_is_pressed = false;
         if(_operation_mode == DRAW_MODE){
             _op_manager->save_draw();
         }
         _ui->setStarAtNameOfTab(true);
-		_ui->undo_action->setEnabled(true);
-	}
+        _ui->undo_action->setEnabled(true);
+    }
 
-	if (e->button() == Qt::RightButton) { // selection of label
-		QColor color = _mask.id.pixel(_mouse_pos / _scale);
-		const LabelInfo * label = _ui->id_labels[color.red()];
+    if (e->button() == Qt::RightButton) { // selection of label
+        QColor color = _mask.id.pixel(_mouse_pos / _scale);
+        const LabelInfo * label = _ui->id_labels[color.red()];
 
-		if(label->item != NULL) {
-			emit(_ui->list_label->currentItemChanged(label->item, NULL));
+        if(label->item != NULL) {
+            emit(_ui->list_label->currentItemChanged(label->item, NULL));
         }
 
-		refresh();
-	}
+        refresh();
+    }
 
-	if (e->button() == Qt::MiddleButton)
-	{
-		cv::Point p = getXYonImage(e);
+    if (e->button() == Qt::MiddleButton)
+    {
+        cv::Point p = getXYonImage(e);
         int x = p.x;
         int y = p.y;
 
-		_mask.exchangeLabel(x, y, _ui->id_labels, _color);
-		update();
-	}
+        _mask.exchangeLabel(x, y, _ui->id_labels, _color);
+        update();
+    }
 }
 
 void ImageCanvas::setSizePen(int pen_size) {
-	_pen_size = pen_size;
+    _pen_size = pen_size;
 }
 
 void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
-	cv::Point p = getXYonImage(e);
+    cv::Point p = getXYonImage(e);
     int x = p.x;
     int y = p.y;
 
+    ColorMask cm = getColorMask();
     if (_pen_size > 0) {
-		_mask.drawFillCircle(x, y, _pen_size, getColorMask(false));
-        _smart_mask.drawFillCircle(x, y, _pen_size, getColorMask(true));
-	} else {
-		_mask.drawPixel(x, y, getColorMask(false));
-        _smart_mask.drawPixel(x, y, getColorMask(true));
-	}  
+        _mask.drawFillCircle(x, y, _pen_size, cm);
+        _top_mask.drawFillCircle(x, y, _pen_size, cm);
+    } else {
+        _mask.drawPixel(x, y, cm);
+        _top_mask.drawPixel(x, y, cm);
+    }
 
-	update();
+    update();
 }
 
 ColorMask ImageCanvas::getColorMask(bool smart) {
@@ -413,7 +427,8 @@ ColorMask ImageCanvas::getColorMask(bool smart) {
 
     // If a box is selected, modify the drawing operation
     if (idx != -1) {
-        QColor bbox_color = box_list[idx].getMaskColor();
+        QColor bbox_color = box_list[idx].getMaskColor();    setPixmap(QPixmap::fromImage(_image));
+
 
         int id = _ui->id_labels.getIdFromR(bbox_color.red());
 
@@ -444,9 +459,9 @@ void ImageCanvas::_fill(QMouseEvent *e){
 void ImageCanvas::_startMarkingBoundingBox(QMouseEvent *e){
     cv::Point p = getXYonImage(e);
     this->start_x = p.x;
-    this->start_y = p.y; 
+    this->start_y = p.y;
     //store display to buffer
-    _buffer_image = _image.copy();    
+    _buffer_image = _image.copy();
 }
 
 void ImageCanvas::_drawBoundingBox(QMouseEvent *e){
@@ -471,58 +486,56 @@ void ImageCanvas::redrawBoundingBox(int except_index){
 }
 
 void ImageCanvas::clearMask() {
-	_mask = ImageMask(_image.size());
+    _mask = ImageMask(_image.size());
     _smart_mask = ImageMask(_image.size());
-	repaint();
+    repaint();
 }
 
 void ImageCanvas::wheelEvent(QWheelEvent * event) {
-	int delta = event->delta() > 0 ? 1 : -1;
-	if (Qt::ShiftModifier == event->modifiers()) {
+    int delta = event->delta() > 0 ? 1 : -1;
+    if (Qt::ShiftModifier == event->modifiers()) {
         _scroll_parent->verticalScrollBar()->setEnabled(false);
-		int value = _ui->spinbox_pen_size->value() + delta * _ui->spinbox_pen_size->singleStep();
-		_ui->spinbox_pen_size->setValue(value);
-		emit(_ui->spinbox_pen_size->valueChanged(value));
-		setSizePen(value);
-		repaint();
-	} else if (Qt::ControlModifier == event->modifiers()) {
-		_scroll_parent->verticalScrollBar()->setEnabled(false);
-		double value = _ui->spinbox_scale->value() + delta * _ui->spinbox_scale->singleStep();
-		value = std::min<double>(_ui->spinbox_scale->maximum(),value);
-		value = std::max<double>(_ui->spinbox_scale->minimum(), value);
+        int value = _ui->spinbox_pen_size->value() + delta * _ui->spinbox_pen_size->singleStep();
+        _ui->spinbox_pen_size->setValue(value);
+        emit(_ui->spinbox_pen_size->valueChanged(value));
+        setSizePen(value);
+        repaint();
+    } else if (Qt::ControlModifier == event->modifiers()) {
+        _scroll_parent->verticalScrollBar()->setEnabled(false);
+        double value = _ui->spinbox_scale->value() + delta * _ui->spinbox_scale->singleStep();
+        value = std::min<double>(_ui->spinbox_scale->maximum(),value);
+        value = std::max<double>(_ui->spinbox_scale->minimum(), value);
 
-		_ui->spinbox_scale->setValue(value);
-		scaleChanged(value);
-		repaint();
-	} else {
+        _ui->spinbox_scale->setValue(value);
+        scaleChanged(value);
+        repaint();
+    } else {
         _scroll_parent->verticalScrollBar()->setEnabled(true);
-	}
+    }
 }
 
 void ImageCanvas::keyPressEvent(QKeyEvent * event) {
-	if (event->key() == Qt::Key_Space) {
+    if (event->key() == Qt::Key_Space) {
 
         //emit(_ui->button_smart_mask->released());
-	} else if(event->key() == Qt::Key_Delete){
-        if(_operation_mode == BOX_SELECTED){
+    } else if(event->key() == Qt::Key_Delete){
+        int idx = getSelectedBox();
+        if (idx != -1)
+        {
             _operation_mode = DRAW_MODE;
-            int i = getSelectedBox();
-            if(i== -1){
-                return;
+            for (auto bbox : box_list) {
+                bbox.unselect();
             }
-            _op_manager->delete_bbox(box_list[i]);
-            std::cout<<"box: ";
-            box_list[i].printBoxParam();
-            box_list.erase (box_list.begin()+i);
+            _op_manager->delete_bbox(box_list[idx]);
             redrawBoundingBox();
-            update(); 
+            update();
         }
     }
 }
 
 
 void ImageCanvas::setImageMask(const ImageMask & mask) {
-	_mask = mask;
+    _mask = mask;
 }
 
 
@@ -531,13 +544,13 @@ void ImageCanvas::setSmartImageMask(const ImageMask & smart_mask) {
 }
 
 void ImageCanvas::setId(int id) {
-	_color.id = QColor(id, id, id);
+    _color.id = QColor(id, id, id);
     _cid = id;
-	_color.color = _ui->id_labels[id]->color;
+    _color.color = _ui->id_labels[id]->color;
 }
 
 void ImageCanvas::refresh() {
-	update();
+    update();
 }
 
 
@@ -547,7 +560,7 @@ void ImageCanvas::undo() {
     }
     update();
 
-	_ui->redo_action->setEnabled(true);
+    _ui->redo_action->setEnabled(true);
 }
 
 void ImageCanvas::redo() {
@@ -555,7 +568,7 @@ void ImageCanvas::redo() {
         _op_manager->redo();
     }
     update();
-	_ui->undo_action->setEnabled(true);
+    _ui->undo_action->setEnabled(true);
 }
 
 std::string ImageCanvas::getObjectString(){

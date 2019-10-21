@@ -39,7 +39,6 @@ ImageMask::ImageMask() {}
 ImageMask::ImageMask(const QString &file, Id2Labels id_labels) {
 	id = mat2QImage(cv::imread(file.toStdString()));
 	color = idToColor(id, id_labels);
-    createBuffer();
 }
 
 ImageMask::ImageMask(QSize s) {
@@ -47,7 +46,6 @@ ImageMask::ImageMask(QSize s) {
 	color = QImage(s, QImage::Format_RGB888);
 	id.fill(QColor(0, 0, 0));
 	color.fill(QColor(0, 0, 0));
-    createBuffer();
 }
 
 Mask ImageMask::getMask() {
@@ -65,7 +63,6 @@ void ImageMask::setMask(Mask mask) {
 int ImageMask::loadSmartMaskFile(const QString &file) {
 	cv::Mat img = cv::imread(file.toStdString());
 	color = mat2QImage(img);
-	createBuffer();
 }
 
 int ImageMask::countInstances() {
@@ -113,7 +110,6 @@ void ImageMask::drawFillCircle(int x, int y, int pen_size, ColorMask cm) {
 	painter_color.setBrush(QBrush(cm.color));
 	painter_color.drawEllipse(x, y, pen_size, pen_size);
 	painter_color.end();
-    circle(this->_buffer, cv::Point(x,y), pen_size/2.0, getColor(cm.color),CV_FILLED);
 }
 
 void ImageMask::fill(int x, int y, ColorMask cm, const Id2Labels & id_labels) {
@@ -166,14 +162,4 @@ cv::Scalar ImageMask::getColor(QColor& color){
     int r,g,b;
 	color.getRgb(&r, &g, &b);
     return cv::Scalar(b,g,r);
-}
-
-void ImageMask::createBuffer(){
-    int width = id.width();
-    int height = id.height();
-    this->_buffer = cv::Mat::zeros(cv::Size(width, height), CV_8UC3);
-}
-
-void ImageMask::destroyBuffer(){
-    this->_buffer.release(); // will free memory
 }

@@ -4,6 +4,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <QImage>
+#include <QColor>
 
 typedef std::vector<cv::Point> PointList;
 

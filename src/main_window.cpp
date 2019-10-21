@@ -18,61 +18,60 @@
 
 #include "about_dialog.h"
 
-MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
-	: QMainWindow(parent, flags)
+MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
-	setupUi(this);
-	setWindowTitle(QApplication::translate("MainWindow", "PixelAnnotationTool " PIXEL_ANNOTATION_TOOL_GIT_TAG, Q_NULLPTR));
-	list_label->setSpacing(1);
+    setupUi(this);
+    setWindowTitle(QApplication::translate("MainWindow", "PixelAnnotationTool " PIXEL_ANNOTATION_TOOL_GIT_TAG, Q_NULLPTR));
+    list_label->setSpacing(1);
     image_canvas = NULL;
     smart_mask_action = new QAction(tr("&Apply a smart mask to the current selection"), this);
-	save_action = new QAction(tr("&Save current image"), this);
+    save_action = new QAction(tr("&Save current image"), this);
     copy_mask_action = new QAction(tr("&Copy Mask"), this);
     paste_mask_action = new QAction(tr("&Paste Mask"), this);
     clear_mask_action = new QAction(tr("&Clear Mask mask"), this);
     close_tab_action = new QAction(tr("&Close current tab"), this);
     open_dir_action = new QAction(tr("&Open directory"),this);
-	undo_action = new QAction(tr("&Undo"), this);
-	redo_action = new QAction(tr("&Redo"), this);
-	smart_mask_action->setShortcut(Qt::Key_Space);
-	undo_action->setShortcuts(QKeySequence::Undo);
-	redo_action->setShortcuts(QKeySequence::Redo);
-	save_action->setShortcut(Qt::CTRL+Qt::Key_S);
+    undo_action = new QAction(tr("&Undo"), this);
+    redo_action = new QAction(tr("&Redo"), this);
+    smart_mask_action->setShortcut(Qt::Key_Space);
+    undo_action->setShortcuts(QKeySequence::Undo);
+    redo_action->setShortcuts(QKeySequence::Redo);
+    save_action->setShortcut(Qt::CTRL+Qt::Key_S);
     copy_mask_action->setShortcut(Qt::CTRL + Qt::Key_C);
     paste_mask_action->setShortcut(Qt::CTRL + Qt::Key_V);
     clear_mask_action->setShortcut(Qt::CTRL + Qt::Key_R);
     close_tab_action->setShortcut(Qt::CTRL + Qt::Key_W);
     open_dir_action->setShortcut(Qt::CTRL + Qt::Key_O);
-	undo_action->setEnabled(false);
-	redo_action->setEnabled(false);
-	smart_mask_action->setEnabled(true);
-	menuFile->addAction(save_action);
+    undo_action->setEnabled(false);
+    redo_action->setEnabled(false);
+    smart_mask_action->setEnabled(true);
+    menuFile->addAction(save_action);
     menuFile->addAction(open_dir_action);
     menuEdit->addAction(close_tab_action);
-	menuEdit->addAction(undo_action);
-	menuEdit->addAction(redo_action);
+    menuEdit->addAction(undo_action);
+    menuEdit->addAction(redo_action);
     menuEdit->addAction(copy_mask_action);
     menuEdit->addAction(paste_mask_action);
     menuEdit->addAction(clear_mask_action);
     menuTool->addAction(smart_mask_action);
 
-	tabWidget->clear();
-	connect(button_smart_mask      , SIGNAL(released())                        , this, SLOT(runSmartMask()  ));
-	connect(actionOpen_config_file, SIGNAL(triggered())                       , this, SLOT(loadConfigFile()));
-	connect(actionSave_config_file, SIGNAL(triggered())                       , this, SLOT(saveConfigFile()));
+    tabWidget->clear();
+    connect(button_smart_mask      , SIGNAL(released())                        , this, SLOT(runSmartMask()  ));
+    connect(actionOpen_config_file, SIGNAL(triggered())                       , this, SLOT(loadConfigFile()));
+    connect(actionSave_config_file, SIGNAL(triggered())                       , this, SLOT(saveConfigFile()));
     connect(close_tab_action      , SIGNAL(triggered())                       , this, SLOT(closeCurrentTab()));
     connect(copy_mask_action      , SIGNAL(triggered())                       , this, SLOT(copyMask()));
     connect(paste_mask_action     , SIGNAL(triggered())                       , this, SLOT(pasteMask()));
     connect(clear_mask_action     , SIGNAL(triggered())                       , this, SLOT(clearMask()));
-	connect(tabWidget             , SIGNAL(tabCloseRequested(int))            , this, SLOT(closeTab(int)   ));
-	connect(tabWidget             , SIGNAL(currentChanged(int))               , this, SLOT(updateConnect(int)));
+    connect(tabWidget             , SIGNAL(tabCloseRequested(int))            , this, SLOT(closeTab(int)   ));
+    connect(tabWidget             , SIGNAL(currentChanged(int))               , this, SLOT(updateConnect(int)));
     connect(tree_widget_img       , SIGNAL(itemClicked(QTreeWidgetItem *,int)), this, SLOT(treeWidgetClicked()));
-    connect(open_dir_action       , SIGNAL(triggered())                       , this, SLOT(on_actionOpenDir_triggered())); 
-	labels = defaulfLabels();
+    connect(open_dir_action       , SIGNAL(triggered())                       , this, SLOT(on_actionOpenDir_triggered()));
+    labels = defaulfLabels();
 
-	loadConfig(QCoreApplication::applicationDirPath() + "/../config.json");
-	connect(list_label, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changeLabel(QListWidgetItem*, QListWidgetItem*)));
-	connect(list_label, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(changeColor(QListWidgetItem*)));
+    loadConfig(QCoreApplication::applicationDirPath() + "/../config.json");
+    connect(list_label, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changeLabel(QListWidgetItem*, QListWidgetItem*)));
+    connect(list_label, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(changeColor(QListWidgetItem*)));
 
     list_label->setEnabled(false);
 }
@@ -90,7 +89,7 @@ void MainWindow::closeTab(int index) {
 
     if (ic->isNotSaved()) {
         QMessageBox::StandardButton reply = QMessageBox::question(this, "Current image is not saved",
-            "You will close the current image, Would you like saved image before ?", QMessageBox::Yes | QMessageBox::No);
+                                                                  "You will close the current image, Would you like saved image before ?", QMessageBox::Yes | QMessageBox::No);
         if (reply == QMessageBox::Yes) {
             ic->saveMask();
         }
@@ -106,87 +105,87 @@ void MainWindow::closeTab(int index) {
 }
 
 void MainWindow::loadConfigLabels() {
-	list_label->clear();
-	QMapIterator<QString, LabelInfo> it(labels);
-	while (it.hasNext()) {
-		it.next();
-		const LabelInfo & label = it.value();
-		QListWidgetItem * item = new QListWidgetItem(list_label);
-		LabelWidget * label_widget = new LabelWidget(label,this);
-		
-		item->setSizeHint(label_widget->sizeHint());
-		item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-		list_label->addItem(item);
-		list_label->setItemWidget(item, label_widget);
+    list_label->clear();
+    QMapIterator<QString, LabelInfo> it(labels);
+    while (it.hasNext()) {
+        it.next();
+        const LabelInfo & label = it.value();
+        QListWidgetItem * item = new QListWidgetItem(list_label);
+        LabelWidget * label_widget = new LabelWidget(label,this);
 
-		auto& ref = labels[it.key()];
-		ref.item = item;
+        item->setSizeHint(label_widget->sizeHint());
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        list_label->addItem(item);
+        list_label->setItemWidget(item, label_widget);
 
-		int id = list_label->row(item);
-		const QString shortcut_key = (id < 9)  ? QString("Ctrl+%1").arg(id + 1) :
-                                            (id < 19) ? QString("Alt+%1").arg(id - 10 + 1)  :
-                                            (id < 29) ? QString("Ctrl+Alt+%1").arg(id - 20 + 1) :
-                                            (id < 39) ? QString("Ctrl+Shift+Alt+%1").arg(id - 30 + 1) :
-                                            QString();
+        auto& ref = labels[it.key()];
+        ref.item = item;
 
-		if(id < 39) {
-			QShortcut *shortcut = new QShortcut(QKeySequence(shortcut_key), this);
-			ref.shortcut = shortcut;
+        int id = list_label->row(item);
+        const QString shortcut_key = (id < 9)  ? QString("Ctrl+%1").arg(id + 1) :
+                                                 (id < 19) ? QString("Alt+%1").arg(id - 10 + 1)  :
+                                                             (id < 29) ? QString("Ctrl+Alt+%1").arg(id - 20 + 1) :
+                                                                         (id < 39) ? QString("Ctrl+Shift+Alt+%1").arg(id - 30 + 1) :
+                                                                                     QString();
 
-			QString text = label.name + " (" + ref.shortcut->key().toString() + ")";
-			label_widget->setText(text);
+        if(id < 39) {
+            QShortcut *shortcut = new QShortcut(QKeySequence(shortcut_key), this);
+            ref.shortcut = shortcut;
 
-			connect(shortcut, &QShortcut::activated, this, [=]{onLabelShortcut(id);});
-		}
+            QString text = label.name + " (" + ref.shortcut->key().toString() + ")";
+            label_widget->setText(text);
 
-	}
-	id_labels = getId2Label(labels);
+            connect(shortcut, &QShortcut::activated, this, [=]{onLabelShortcut(id);});
+        }
+
+    }
+    id_labels = getId2Label(labels);
 }
 
 void MainWindow::changeColor(QListWidgetItem* item) {
-	LabelWidget * widget = static_cast<LabelWidget*>(list_label->itemWidget(item));
-	LabelInfo & label = labels[widget->text()];
-	QColor color = QColorDialog::getColor(label.color, this);
-	if (color.isValid()) {
-		label.color = color;
-		widget->setNewLabel(label);
-	}
-	image_canvas->setId(label.id);
-	image_canvas->updateMaskColor(id_labels);
-	image_canvas->refresh();
+    LabelWidget * widget = static_cast<LabelWidget*>(list_label->itemWidget(item));
+    LabelInfo & label = labels[widget->text()];
+    QColor color = QColorDialog::getColor(label.color, this);
+    if (color.isValid()) {
+        label.color = color;
+        widget->setNewLabel(label);
+    }
+    image_canvas->setId(label.id);
+    image_canvas->updateMaskColor(id_labels);
+    image_canvas->refresh();
 }
 
 void MainWindow::changeLabel(QListWidgetItem* current, QListWidgetItem* previous) {
-	if (current == NULL && previous == NULL)
-		return;
+    if (current == NULL && previous == NULL)
+        return;
 
-	LabelWidget * label;
-	if (previous == NULL) {
-		for (int i = 0; i < list_label->count(); i++) {
-			LabelWidget * label = static_cast<LabelWidget*>(list_label->itemWidget(list_label->item(i)));
-			label->setSelected(false);
-		}
-	} else {
-		label = static_cast<LabelWidget*>(list_label->itemWidget(previous));
-		label->setSelected(false);
-	}
+    LabelWidget * label;
+    if (previous == NULL) {
+        for (int i = 0; i < list_label->count(); i++) {
+            LabelWidget * label = static_cast<LabelWidget*>(list_label->itemWidget(list_label->item(i)));
+            label->setSelected(false);
+        }
+    } else {
+        label = static_cast<LabelWidget*>(list_label->itemWidget(previous));
+        label->setSelected(false);
+    }
 
-	if (current == NULL) current = previous;
+    if (current == NULL) current = previous;
 
-	label = static_cast<LabelWidget*>(list_label->itemWidget(current));
-	label->setSelected(true);
+    label = static_cast<LabelWidget*>(list_label->itemWidget(current));
+    label->setSelected(true);
 
-	QString str;
-	QString key = label->getName();
-	QTextStream sstr(&str);
-	sstr <<"label=["<< key <<"] id=[" << labels[key].id << "] categorie=[" << labels[key].categorie << "] color=[" << labels[key].color.name() << "]" ;
-	statusBar()->showMessage(str);
-	image_canvas->setId(labels[key].id);
+    QString str;
+    QString key = label->getName();
+    QTextStream sstr(&str);
+    sstr <<"label=["<< key <<"] id=[" << labels[key].id << "] categorie=[" << labels[key].categorie << "] color=[" << labels[key].color.name() << "]" ;
+    statusBar()->showMessage(str);
+    image_canvas->setId(labels[key].id);
 }
 
 void MainWindow::runSmartMask() {
-	std::cout << "PRESSED" << std::endl;
-	ImageCanvas * ic = image_canvas;
+    std::cout << "PRESSED" << std::endl;
+    ImageCanvas * ic = image_canvas;
     if( ic != NULL)
         ic->smartMask();
 }
@@ -211,12 +210,12 @@ void MainWindow::updateConnect(const ImageCanvas * ic) {
     connect(spinbox_scale, SIGNAL(valueChanged(double)), ic, SLOT(scaleChanged(double)));
     connect(spinbox_alpha, SIGNAL(valueChanged(double)), ic, SLOT(alphaChanged(double)));
     connect(spinbox_pen_size, SIGNAL(valueChanged(int)), ic, SLOT(setSizePen(int)));
-	connect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
-	connect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
-	connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
-	connect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
-	connect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
-	connect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
+    connect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
+    connect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
+    connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
+    connect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
+    connect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
+    connect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
 }
 
 void MainWindow::allDisconnnect(const ImageCanvas * ic) {
@@ -234,10 +233,10 @@ void MainWindow::allDisconnnect(const ImageCanvas * ic) {
 
 ImageCanvas * MainWindow::newImageCanvas() {
     ImageCanvas * ic = new ImageCanvas( this);
-	ic->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-	ic->setScaledContents(true);
-	updateConnect(ic);
-	return ic;
+    ic->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    ic->setScaledContents(true);
+    updateConnect(ic);
+    return ic;
 }
 
 void MainWindow::updateConnect(int index) {
@@ -247,9 +246,9 @@ void MainWindow::updateConnect(int index) {
     image_canvas = getImageCanvas(index);
     if(image_canvas!= NULL)
         list_label->setEnabled(true);
-    else 
+    else
         list_label->setEnabled(false);
-	updateConnect(image_canvas);
+    updateConnect(image_canvas);
 }
 
 ImageCanvas * MainWindow::getImageCanvas(int index) {
@@ -259,35 +258,35 @@ ImageCanvas * MainWindow::getImageCanvas(int index) {
 }
 
 int MainWindow::getImageCanvas(QString name, ImageCanvas * ic) {
-	for (int i = 0; i < tabWidget->count(); i++) {
-		if (tabWidget->tabText(i).startsWith(name) ) {
+    for (int i = 0; i < tabWidget->count(); i++) {
+        if (tabWidget->tabText(i).startsWith(name) ) {
             ic = getImageCanvas(i);
-			return i;
-		}
-	}
-	ic = newImageCanvas();
-	QString iDir = currentDir();
-	QString filepath(iDir + "/" + name);
-	ic->loadImage(filepath);
+            return i;
+        }
+    }
+    ic = newImageCanvas();
+    QString iDir = currentDir();
+    QString filepath(iDir + "/" + name);
+    ic->loadImage(filepath);
     int index = tabWidget->addTab(ic->getScrollParent(), name);
     
-	return index;
+    return index;
 }
 
 QString MainWindow::currentDir() const {
-	QTreeWidgetItem *current = tree_widget_img->currentItem();
-	if (!current || !current->parent())
-		return "";
+    QTreeWidgetItem *current = tree_widget_img->currentItem();
+    if (!current || !current->parent())
+        return "";
 
-	return current->parent()->text(0);
+    return current->parent()->text(0);
 }
 
 QString MainWindow::currentFile() const {
-	QTreeWidgetItem *current = tree_widget_img->currentItem();
-	if (!current || !current->parent())
-		return "";
+    QTreeWidgetItem *current = tree_widget_img->currentItem();
+    if (!current || !current->parent())
+        return "";
 
-	return current->text(0);
+    return current->text(0);
 }
 
 
@@ -309,87 +308,87 @@ void MainWindow::on_tree_widget_img_currentItemChanged(QTreeWidgetItem *current,
 }
 
 void MainWindow::on_actionOpenDir_triggered() {
-	statusBar()->clearMessage();
-	QString openedDir = QFileDialog::getExistingDirectory(this, "Choose a directory to be read in", curr_open_dir);
-	if (openedDir.isEmpty())
-		return;
+    statusBar()->clearMessage();
+    QString openedDir = QFileDialog::getExistingDirectory(this, "Choose a directory to be read in", curr_open_dir);
+    if (openedDir.isEmpty())
+        return;
 
-	curr_open_dir = openedDir;
-	
-	QTreeWidgetItem *currentTreeDir = new QTreeWidgetItem(tree_widget_img);
-	tree_widget_img->setItemExpanded(currentTreeDir, true);
-	currentTreeDir->setText(0, curr_open_dir);
+    curr_open_dir = openedDir;
 
-	QDir current_dir(curr_open_dir);
-	QStringList files = current_dir.entryList();
-	static QStringList ext_img = { "png","jpg","bmp","pgm","jpeg" ,"jpe" ,"jp2" ,"pbm" ,"ppm" ,"tiff" ,"tif" };
-	for (int i = 0; i < files.size(); i++) {
-		if (files[i].size() < 4)
-			continue;
-		QString ext = files[i].section(".", -1, -1);
-		bool is_image = false;
-		for (int e = 0; e < ext_img.size(); e++) {
-			if (ext.toLower() == ext_img[e]) {
-				is_image = true;
-				break;
-			}
-		}
-		if (!is_image)
-			continue;
+    QTreeWidgetItem *currentTreeDir = new QTreeWidgetItem(tree_widget_img);
+    tree_widget_img->setItemExpanded(currentTreeDir, true);
+    currentTreeDir->setText(0, curr_open_dir);
 
-		if( files[i].toLower().indexOf("_mask.png") > -1)
-			continue;
+    QDir current_dir(curr_open_dir);
+    QStringList files = current_dir.entryList();
+    static QStringList ext_img = { "png","jpg","bmp","pgm","jpeg" ,"jpe" ,"jp2" ,"pbm" ,"ppm" ,"tiff" ,"tif" };
+    for (int i = 0; i < files.size(); i++) {
+        if (files[i].size() < 4)
+            continue;
+        QString ext = files[i].section(".", -1, -1);
+        bool is_image = false;
+        for (int e = 0; e < ext_img.size(); e++) {
+            if (ext.toLower() == ext_img[e]) {
+                is_image = true;
+                break;
+            }
+        }
+        if (!is_image)
+            continue;
 
-		QTreeWidgetItem *currentFile = new QTreeWidgetItem(currentTreeDir);
-		currentFile->setText(0, files[i]);
-	}
-//	setWindowTitle("PixelAnnotation - " + openedDir);
+        if( files[i].toLower().indexOf("_mask.png") > -1)
+            continue;
+
+        QTreeWidgetItem *currentFile = new QTreeWidgetItem(currentTreeDir);
+        currentFile->setText(0, files[i]);
+    }
+    //	setWindowTitle("PixelAnnotation - " + openedDir);
 }
 
 
 void MainWindow::saveConfigFile() {
-	QString file = QFileDialog::getSaveFileName(this, tr("Save Config File"), QString(), tr("JSon file (*.json)"));
-	QFile save_file(file);
-	if (!save_file.open(QIODevice::WriteOnly)) {
-		qWarning("Couldn't open save file.");
-		return ;
-	}
-	QJsonObject object;
-	labels.write(object);
-	QJsonDocument saveDoc(object);
-	save_file.write(saveDoc.toJson());
-	save_file.close();
+    QString file = QFileDialog::getSaveFileName(this, tr("Save Config File"), QString(), tr("JSon file (*.json)"));
+    QFile save_file(file);
+    if (!save_file.open(QIODevice::WriteOnly)) {
+        qWarning("Couldn't open save file.");
+        return ;
+    }
+    QJsonObject object;
+    labels.write(object);
+    QJsonDocument saveDoc(object);
+    save_file.write(saveDoc.toJson());
+    save_file.close();
 }
 
 void MainWindow::loadConfigFile() {
-	QString file = QFileDialog::getOpenFileName(this, tr("Open Config File"), QString(), tr("JSon file (*.json)"));
-	loadConfig(file);
+    QString file = QFileDialog::getOpenFileName(this, tr("Open Config File"), QString(), tr("JSon file (*.json)"));
+    loadConfig(file);
 
 }
 
 void MainWindow::loadConfig(QString file_path) {
-	QFile open_file(file_path);
-	if (!open_file.open(QIODevice::ReadOnly)) {
-		qWarning("Couldn't open save file.");
-		return;
-	}
+    QFile open_file(file_path);
+    if (!open_file.open(QIODevice::ReadOnly)) {
+        qWarning("Couldn't open save file.");
+        return;
+    }
 
-	QJsonObject object;
-	QByteArray saveData = open_file.readAll();
-	QJsonDocument loadDoc(QJsonDocument::fromJson(saveData));
+    QJsonObject object;
+    QByteArray saveData = open_file.readAll();
+    QJsonDocument loadDoc(QJsonDocument::fromJson(saveData));
 
-	labels.clear();
-	labels.read(loadDoc.object());
-	open_file.close();
+    labels.clear();
+    labels.read(loadDoc.object());
+    open_file.close();
 
-	loadConfigLabels();
-	update();
+    loadConfigLabels();
+    update();
 }
 
 void MainWindow::on_actionAbout_triggered() {
-	AboutDialog *d = new AboutDialog(this);
-	d->setModal(true);
-	d->show();
+    AboutDialog *d = new AboutDialog(this);
+    d->setModal(true);
+    d->show();
 }
 
 void MainWindow::copyMask() {
