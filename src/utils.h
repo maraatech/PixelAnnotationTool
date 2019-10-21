@@ -12,7 +12,7 @@
 
 cv::Mat qImage2Mat(QImage const& src);
 QImage mat2QImage(cv::Mat const& src);
-std::set<QColor> findUniqueColors(QImage const& src);
+std::set<QColor> findUniqueColors(cv::Mat const& src);
 BoundingBox findBoundingBox(cv::Mat const& src, QColor target, std::string name);
 QImage idToColor(const QImage &image_id, const Id2Labels& id_label);
 void idToColor(const QImage &image_id, const Id2Labels& id_label, QImage *result);

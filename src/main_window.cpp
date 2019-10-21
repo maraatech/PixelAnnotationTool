@@ -21,6 +21,7 @@
 MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
     setupUi(this);
+    setFocusPolicy(Qt::StrongFocus);
     setWindowTitle(QApplication::translate("MainWindow", "PixelAnnotationTool " PIXEL_ANNOTATION_TOOL_GIT_TAG, Q_NULLPTR));
     list_label->setSpacing(1);
     image_canvas = NULL;

@@ -16,8 +16,7 @@ cv::Mat qImage2Mat(QImage const& src) {
 	return result;
 }
 
-std::set<QColor> findUniqueColors(QImage const& src) {
-	cv::Mat img = qImage2Mat(src);
+std::set<QColor> findUniqueColors(cv::Mat const& img) {
 	// Count unique colors
 	std::set<QColor> unique;
 
@@ -26,7 +25,7 @@ std::set<QColor> findUniqueColors(QImage const& src) {
 		for (int j = 0; j < img.cols; j++)
 		{
 			auto pixel = img.at<cv::Vec3b>(i,j);
-			QColor color = QColor(pixel[2], pixel[ 1], pixel[0]);
+            QColor color = QColor(pixel[2], pixel[ 1], pixel[0]);
 			unique.insert(color);
 		}
 	}

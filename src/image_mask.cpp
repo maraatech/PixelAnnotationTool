@@ -66,7 +66,7 @@ int ImageMask::loadSmartMaskFile(const QString &file) {
 }
 
 int ImageMask::countInstances() {
-	auto colors = findUniqueColors(color);
+    auto colors = findUniqueColors(qImage2Mat(color));
 
 	// Remove background color as  this is not a valid instance
 	colors.erase(QColor(0, 0, 0));

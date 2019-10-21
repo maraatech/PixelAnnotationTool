@@ -69,7 +69,7 @@ void ImageCanvas::loadImage(const QString &filename) {
         _mask = ImageMask(_mask_file,_ui->id_labels);
         _smart_mask = ImageMask(_image.size());
         _smart_mask.loadSmartMaskFile(_smart_mask_file);
-        _visible_mask = ImageMask(_image.size());
+        _top_mask = ImageMask(_image.size());
 
         _instance_num = _smart_mask.countInstances();
         std::cout << "Found Unique Instances:" << _instance_num << std::endl;
@@ -129,49 +129,83 @@ void ImageCanvas::parseXML(QString file_name){
 }
 
 void ImageCanvas::smartMask() {
-    std::cout << "Entering Smark Mask" << std::endl;
+    // Push onto stack
+//    cv::imshow( "Display window", qImage2Mat(_top_mask.id));
 
-    int idx = getSelectedBox();
-    
-    if (idx != -1)
-    {
-        for (auto bbox : box_list) {
-            bbox.unselect();
-        }
-    }
+//    cv::waitKey(0);
 
-    //TODO: Performance improvement, could just compare buffers to see if changes have been made
-    cv::Mat img = qImage2Mat(_smart_mask.color);
+    mask_history.push_back(_top_mask);
 
-    auto unique = findUniqueColors(_smart_mask.color);
+
+    // Get ids in top level
+    auto unique = findUniqueColors(qImage2Mat(_top_mask.id));
     unique.erase(QColor(0, 0, 0));
-    
+
     int n = unique.size();
-    if (n > _instance_num) {
-        std::cout << "Updated instance number to " << n << std::endl;
-    }
-
-    _instance_num = n;
-
-    auto preop_box_list = box_list;
-
-    box_list.clear();
-
-    std::cout << "Found unique colors: " << n << std::endl;
-    for (auto c : unique)
+    if (n > 1)
     {
-        int id = _ui->id_labels.getIdFromR(c.red());
-        auto label = _ui->id_labels[id]->name.toStdString();
-
-        BoundingBox bbox = findBoundingBox(img, c, label);
-        bbox.setMaskColor(c);
-        box_list.push_back(bbox);
+        std::cout << "ERROR: Multiple classes labeled on this instance" << std::endl;
     }
 
-    auto postop_box_list = box_list;
-    _op_manager->smart_mask(preop_box_list, postop_box_list);
+    // First unique id
 
+    int id = unique.begin()->red();
+    auto label = _ui->id_labels[id]->name.toStdString();
+
+    // Add bounding box
+    BoundingBox bbox = findBoundingBox(qImage2Mat(_top_mask.id), *unique.begin(), label);
+    bbox.setMaskColor(*unique.begin());
+    box_list.push_back(bbox);
     redrawBoundingBox();
+
+
+    // clean top_mask
+
+    _top_mask = ImageMask(_image.size());
+    return;
+//    std::cout << "Entering Smark Mask" << std::endl;
+
+//    int idx = getSelectedBox();
+    
+//    if (idx != -1)
+//    {
+//        for (auto bbox : box_list) {
+//            bbox.unselect();
+//        }
+//    }
+
+//    //TODO: Performance improvement, could just compare buffers to see if changes have been made
+//    cv::Mat img = qImage2Mat(_smart_mask.color);
+
+//    auto unique = findUniqueColors(_smart_mask.color);
+//    unique.erase(QColor(0, 0, 0));
+    
+//    int n = unique.size();
+//    if (n > _instance_num) {
+//        std::cout << "Updated instance number to " << n << std::endl;
+//    }
+
+//    _instance_num = n;
+
+//    auto preop_box_list = box_list;
+
+//    box_list.clear();
+
+//    std::cout << "Found unique colors: " << n << std::endl;
+//    for (auto c : unique)
+//    {
+//        int id = _ui->id_labels.getIdFromR(c.red());
+//        auto label = _ui->id_labels[id]->name.toStdString();
+
+//        BoundingBox bbox = findBoundingBox(img, c, label);
+//        bbox.setMaskColor(c);
+//        box_list.push_back(bbox);
+//    }
+
+//    auto postop_box_list = box_list;
+//    _op_manager->smart_mask(preop_box_list, postop_box_list);
+
+//    redrawBoundingBox();
 }
 
 
@@ -488,6 +522,7 @@ void ImageCanvas::redrawBoundingBox(int except_index){
 void ImageCanvas::clearMask() {
     _mask = ImageMask(_image.size());
     _smart_mask = ImageMask(_image.size());
+    _top_mask = ImageMask(_image.size());
     repaint();
 }
 
@@ -516,6 +551,7 @@ void ImageCanvas::wheelEvent(QWheelEvent * event) {
 
 void ImageCanvas::keyPressEvent(QKeyEvent * event) {
     if (event->key() == Qt::Key_Space) {
+
 
         //emit(_ui->button_smart_mask->released());
     } else if(event->key() == Qt::Key_Delete){
