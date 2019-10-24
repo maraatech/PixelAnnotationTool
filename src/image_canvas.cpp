@@ -543,6 +543,8 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
         int idx = getSelectedBox();
         if (idx != -1)
         {
+            delete_layer(idx);
+            return;
             _operation_mode = DRAW_MODE;
             for (auto bbox : box_list) {
                 bbox.unselect();
@@ -554,7 +556,23 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
     }
 }
 
-//TODO: Optimize for removing last only
+//TODO: Optimize
+
+void ImageCanvas::delete_layer(int index)
+{
+    if (mask_history.size() == 0 || index > mask_history.size() || index < 0)
+    {
+        return;
+    }
+
+    delete_stack.push(mask_history[index]);
+    mask_history.erase(mask_history.begin() + index);
+
+    regenerate();
+    redrawBoundingBox();
+    update();
+}
+
 void ImageCanvas::delete_last_layer()
 {
     if (mask_history.size() == 0)
@@ -645,14 +663,17 @@ void ImageCanvas::refresh() {
 
 
 void ImageCanvas::undo() {
-    delete_last_layer();
-    return;
-    if (_operation_mode == DRAW_MODE) {
-        _op_manager->undo();
+    auto top_mask_mat = qImage2Mat(_top_mask.id);
+    cv::Scalar sum = cv::sum(top_mask_mat);
+    if (cv::sum(sum)[0] > 0)
+    {
+        // Pretty slow
+        regenerate();
+        return;
     }
-    update();
 
-    _ui->redo_action->setEnabled(true);
+    delete_layer(mask_history.size() - 1);
+    return;
 }
 
 void ImageCanvas::redo() {

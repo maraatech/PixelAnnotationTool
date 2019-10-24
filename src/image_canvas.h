@@ -80,8 +80,11 @@ private:
     cv::Point getXYonImage(int x_gui, int y_gui);
     void parseXML(QString file_name);
 
+    void delete_layer(int index);
+
     void delete_last_layer();
     void restore_last_layer();
+
 
     QScrollArea     *_scroll_parent    ;
     double           _scale            ;
