@@ -35,6 +35,7 @@ public:
     void refresh();
     void updateMaskColor(const Id2Labels & labels) { _mask.updateColor(labels); }
     void loadImage(const QString &file);
+    void load(const QString &filename);
     QScrollArea * getScrollParent() const { return _scroll_parent; }
     bool isNotSaved();
     void redrawBoundingBox(int except_index =-1);
@@ -62,6 +63,7 @@ public slots :
     void alphaChanged(double);
     void setSizePen(int);
     void clearMask();
+    void save();
     void saveMask();
     void smartMask();
     void undo();
@@ -80,10 +82,16 @@ private:
     cv::Point getXYonImage(int x_gui, int y_gui);
     void parseXML(QString file_name);
 
+    std::string createXML(BoundingBox bbox);
+
+
+
     void delete_layer(int index);
 
     void delete_last_layer();
     void restore_last_layer();
+
+    void clear_box_selection();
 
 
     QScrollArea     *_scroll_parent    ;
@@ -112,7 +120,7 @@ private:
     ImageMask _top_mask;
     ImageMask _prev_mask;
     
-    int _cid =-1;
+    int _cid = 0; // Default to first label
 
     int _continous_click = 0;
     

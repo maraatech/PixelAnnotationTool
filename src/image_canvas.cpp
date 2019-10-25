@@ -7,6 +7,9 @@
 #include <fstream>
 #include <QtXml>
 
+#define MAX_PATH_LENGTH 260
+#define MAX_INSTANCE_COUNT 10000
+
 ImageCanvas::ImageCanvas(MainWindow *ui) :
     QLabel() ,
     _ui(ui){
@@ -51,7 +54,7 @@ void ImageCanvas::_initPixmap() {
 
 void ImageCanvas::loadImage(const QString &filename) {
     if (!_image.isNull() )
-        saveMask();
+        save();
 
     _img_file = filename;
     QFileInfo file(_img_file);
@@ -62,17 +65,11 @@ void ImageCanvas::loadImage(const QString &filename) {
     _orig_image = _image.copy();
 
     _mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_color_mask.png";
-    _smart_mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_smart_mask.png";
     _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + "_bbox.xml";
 
     if (QFile(_mask_file).exists()) {
         _mask = ImageMask(_mask_file,_ui->id_labels);
-        _smart_mask = ImageMask(_image.size());
-        _smart_mask.loadSmartMaskFile(_smart_mask_file);
         _top_mask = ImageMask(_image.size());
-
-        _instance_num = _smart_mask.countInstances();
-        std::cout << "Found Unique Instances:" << _instance_num << std::endl;
         _ui->checkbox_manuel_mask->setChecked(true);
     } else {
         clearMask();
@@ -108,7 +105,7 @@ void ImageCanvas::parseXML(QString file_name){
     // Getting root element
     QDomElement root = document.firstChildElement();
     QDomNodeList nodes = root.elementsByTagName("object");
-    for(int i = 0; i < nodes.count(); i++){
+    for(int i = 0; i < nodes.count(); i++) {
         QDomElement boundbox_node = nodes.at(i).toElement().elementsByTagName("bndbox").at(0).toElement();
         QString name = boundbox_node.elementsByTagName("name").at(0).firstChild().toText().data();
         int min_x = boundbox_node.elementsByTagName("xmin").at(0).firstChild().toText().data().toInt();
@@ -116,12 +113,7 @@ void ImageCanvas::parseXML(QString file_name){
         int min_y = boundbox_node.elementsByTagName("ymin").at(0).firstChild().toText().data().toInt();
         int max_y = boundbox_node.elementsByTagName("ymax").at(0).firstChild().toText().data().toInt();
 
-        int color_r = boundbox_node.elementsByTagName("mask_r").at(0).firstChild().toText().data().toInt();
-        int color_g = boundbox_node.elementsByTagName("mask_g").at(0).firstChild().toText().data().toInt();
-        int color_b = boundbox_node.elementsByTagName("mask_b").at(0).firstChild().toText().data().toInt();
-
         auto bbox = BoundingBox(cv::Point(min_x,min_y),cv::Point(max_x, max_y),name.toStdString());
-        bbox.setMaskColor(QColor(color_r, color_g, color_b));
 
         box_list.push_back(bbox);
     }
@@ -129,73 +121,161 @@ void ImageCanvas::parseXML(QString file_name){
 }
 
 void ImageCanvas::smartMask() {
-    // Push onto stack
-//    cv::imshow( "Display window", qImage2Mat(_top_mask.id));
 
-//    cv::waitKey(0);
+    int index = getSelectedBox();
 
-    _prev_mask.setMask(_mask.getMask().clone());
-    mask_history.push_back(_top_mask);
+    if (index != -1)
+    {
+        //~~~ Modify existing layer ~~~//
+        // 1. Modify bounding box
+        BoundingBox bbox = findBoundingBox(qImage2Mat(mask_history[index].id), _ui->id_labels);
+        box_list[index] = bbox;
+    }
+    else
+    {
+        //~~~ Add new layer ~~~//
 
-    // Add bounding box
-    BoundingBox bbox = findBoundingBox(qImage2Mat(_top_mask.id), _ui->id_labels);
-    box_list.push_back(bbox);
+        // 1. Push onto stack
+
+        _prev_mask.setMask(_mask.getMask().clone());
+        mask_history.push_back(_top_mask);
+        // 2. Add bounding box
+        BoundingBox bbox = findBoundingBox(qImage2Mat(_top_mask.id), _ui->id_labels);
+        box_list.push_back(bbox);
+    }
+
+
     redrawBoundingBox();
-
-
-    // clean top_mask
-
     _top_mask = ImageMask(_image.size());
     return;
-//    std::cout << "Entering Smark Mask" << std::endl;
+}
 
-//    int idx = getSelectedBox();
-    
-//    if (idx != -1)
-//    {
-//        for (auto bbox : box_list) {
-//            bbox.unselect();
-//        }
+void ImageCanvas::load(const QString &filename) {
+    if (!_image.isNull() )
+        save();
+
+    _img_file = QDir(_ui->curr_open_dir).filePath(filename);
+    QFileInfo file(_img_file);
+    QString base = file.baseName();
+    if (!file.exists())
+    {
+        return;
+    }
+
+    // Load image
+
+
+    _image = mat2QImage(cv::imread(file.absoluteFilePath().toStdString()));
+    _orig_image = _image.copy();
+
+    // Load masks and xml
+
+    bool existingData = false;
+
+    for (int file_counter = 0; file_counter < MAX_INSTANCE_COUNT; file_counter++)
+    {
+        char mask_filename[MAX_PATH_LENGTH] = {0};
+        char xml_filename[MAX_PATH_LENGTH] = {0};
+        sprintf(mask_filename, "%s_%04d.png", file.baseName().toStdString().c_str(), file_counter);
+        sprintf(xml_filename, "%s_%04d.xml", file.baseName().toStdString().c_str(), file_counter);
+
+        QString xml_abs_path = QDir(_ui->xml_annotations).filePath(xml_filename);
+        QString mask_abs_path = QDir(_ui->mask_annotations).filePath(mask_filename);
+        if (!QFile().exists(xml_abs_path) || !QFile().exists(mask_abs_path))
+        {
+            break;
+        }
+
+        existingData = true;
+
+        ImageMask mask(mask_abs_path, _ui->id_labels);
+        mask_history.push_back(mask);
+        parseXML(xml_abs_path);
+    }
+
+    if (!existingData)
+    {
+        clearMask();
+    }
+    else
+    {
+        regenerate();
+    }
+
+    setPixmap(QPixmap::fromImage(_image));
+    resize(_scale *_image.size());
+    redrawBoundingBox();
+
+//    _mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_color_mask.png";
+//    _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + "_bbox.xml";
+
+//    if (QFile(_mask_file).exists()) {
+//        _mask = ImageMask(_mask_file,_ui->id_labels);
+//        _top_mask = ImageMask(_image.size());
+//        _ui->checkbox_manuel_mask->setChecked(true);
+//    } else {
+//        clearMask();
 //    }
 
-//    //TODO: Performance improvement, could just compare buffers to see if changes have been made
-//    cv::Mat img = qImage2Mat(_smart_mask.color);
+//    parseXML(_annotation_file);
+//    _ui->undo_action->setEnabled(true);
+//    _ui->redo_action->setEnabled(true);
 
-//    auto unique = findUniqueColors(_smart_mask.color);
-//    unique.erase(QColor(0, 0, 0));
-    
-//    int n = unique.size();
-//    if (n > _instance_num) {
-//        std::cout << "Updated instance number to " << n << std::endl;
-//    }
-
-//    _instance_num = n;
-
-//    auto preop_box_list = box_list;
-
-//    box_list.clear();
-
-//    std::cout << "Found unique colors: " << n << std::endl;
-//    for (auto c : unique)
-//    {
-//        int id = _ui->id_labels.getIdFromR(c.red());
-//        auto label = _ui->id_labels[id]->name.toStdString();
-
-//        BoundingBox bbox = findBoundingBox(img, c, label);
-//        bbox.setMaskColor(c);
-//        box_list.push_back(bbox);
-//    }
-
-//    auto postop_box_list = box_list;
-//    _op_manager->smart_mask(preop_box_list, postop_box_list);
-
+//    setPixmap(QPixmap::fromImage(_image));
+//    resize(_scale *_image.size());
 //    redrawBoundingBox();
+
+
+
+    // Load Bounding Boxes
+}
+
+void ImageCanvas::save() {
+    QFileInfo file(_img_file);
+
+
+    // Save each mask as seperate .png denoted by (Image ID)_XXXX.png
+    // Save XML as (Image ID)_XXXX.xml
+    for (int i = 0; i < mask_history.size(); i++)
+    {
+        auto mask = mask_history[i];
+        auto bbox = box_list[i];
+
+        char mask_filename[MAX_PATH_LENGTH] = {0};
+        char bounding_box_filename[MAX_PATH_LENGTH] = {0};
+        sprintf(mask_filename, "%s_%04d.png", file.baseName().toStdString().c_str(), i);
+        sprintf(bounding_box_filename, "%s_%04d.xml", file.baseName().toStdString().c_str(), i);
+
+        QString mask_abs_path = QDir(_ui->mask_annotations).filePath(mask_filename);
+        QString xml_abs_path = QDir(_ui->xml_annotations).filePath(bounding_box_filename);
+
+        mask.id.save(mask_abs_path);
+
+        auto xml_string = createXML(bbox);
+
+        std::string file_name = xml_abs_path.toStdString();
+        std::ofstream out(file_name);
+        out << xml_string;
+        out.close();
+    }
+
+    // Copy input images to jpgs
+    QString source_abs_path = QDir(_ui->source_images).filePath(file.completeBaseName());
+    if (QFile::exists(source_abs_path))
+    {
+        QFile::remove(source_abs_path);
+    }
+
+    QFile::copy(file.absoluteFilePath(), source_abs_path);
+
+    _ui->setStarAtNameOfTab(false);
 }
 
 
 void ImageCanvas::saveMask() {
     if (isFullZero(_mask.id))
         return;
+
 
     _mask.id.save(_mask_file);
     QFileInfo file(_img_file);
@@ -205,6 +285,51 @@ void ImageCanvas::saveMask() {
     _smart_mask.color.save(_smart_mask_file);
     saveAnnotation();
     _ui->setStarAtNameOfTab(false);
+}
+
+std::string ImageCanvas::createXML(BoundingBox bbox)
+{
+    QFileInfo file(_img_file);
+    std::string xml_text = "";
+
+    xml_text += "<annotation>\n";
+
+    xml_text += "\t<folder>jpgs</folder>\n";
+
+    xml_text += "\t<source>\n";
+    xml_text += "\t\t<database>OXIIIT Custom</database>\n";
+    xml_text += "\t\t<annotation>OXIIIT Bespoke</annotation>\n";
+    xml_text += "\t\t<image>Self</image>\n";
+    xml_text += "\t</source>\n";
+
+    xml_text += "\t<size>\n";
+    xml_text += "\t\t<width>" + std::to_string(width()) + "</width>\n";
+    xml_text += "\t\t<height>" + std::to_string(height()) + "</height>\n";
+    xml_text += "\t\t<depth>3</depth>\n";
+    xml_text += "\t</size>\n";
+
+    xml_text += "\t<segmented>0</segmented>\n";
+
+    xml_text += "\t<object>\n";
+    xml_text += "\t\t<name>" + bbox.getObjectName() + "</name>\n";
+    xml_text += "\t\t<pose>Frontal</pose>\n";
+    xml_text += "\t\t<truncated>0</truncated>\n";
+    xml_text += "\t\t<occluded>0</occluded>\n";
+
+    xml_text += "\t\t<bndbox>\n";
+    xml_text += "\t\t\t<xmin>" + std::to_string(0) + "</xmin>\n";
+    xml_text += "\t\t\t<ymin>" + std::to_string(0) + "</ymin>\n";
+    xml_text += "\t\t\t<xmax>" + std::to_string(0) + "</xmax>\n";
+    xml_text += "\t\t\t<ymax>" + std::to_string(0) + "</ymax>\n";
+    xml_text += "\t\t</bndbox>\n";
+
+    xml_text += "\t\t<difficult>0</difficult>";
+
+    xml_text += "\t</object>\n";
+
+    xml_text += "</annotation>";
+
+    return xml_text;
 }
 
 void ImageCanvas::saveAnnotation(){
@@ -343,15 +468,19 @@ void ImageCanvas::mousePressEvent(QMouseEvent * e) {
                     }
                 }
 
-                if (select_indexes.empty()) {
-                    _continous_click = 0;
-                } else
-                {
+                // Found boxes in range
+                if (!select_indexes.empty()) {
                     int index = select_indexes[_continous_click % select_indexes.size()];
                     box_list[index].select();
                     drawMarkedBoundingBox(box_list[index]);
                     _continous_click++;
+                    return;
+
                 }
+
+                // Did not find boxes in range
+                _continous_click = 0;
+                clear_box_selection();
                 return;
             } else {
                 _drawFillCircle(e);
@@ -374,14 +503,6 @@ void ImageCanvas::mouseMoveEvent(QMouseEvent * e) {
     update();
 }
 
-void ImageCanvas::reset(int operation){
-    start_x =-1;
-    start_y =-1;
-    _operation_mode = operation;
-    redrawBoundingBox();
-    update();
-}
-
 void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
     if(e->button() == Qt::LeftButton) {
         std::cout<<"mouse released"<<getXYonImage(e)<<std::endl;
@@ -390,7 +511,6 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
             _op_manager->save_draw();
         }
         _ui->setStarAtNameOfTab(true);
-        _ui->undo_action->setEnabled(true);
     }
 
     if (e->button() == Qt::RightButton) { // selection of label
@@ -415,6 +535,15 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
     }
 }
 
+
+void ImageCanvas::reset(int operation){
+    start_x =-1;
+    start_y =-1;
+    _operation_mode = operation;
+    redrawBoundingBox();
+    update();
+}
+
 void ImageCanvas::setSizePen(int pen_size) {
     _pen_size = pen_size;
 }
@@ -424,13 +553,24 @@ void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
     int x = p.x;
     int y = p.y;
 
+    int idx = getSelectedBox();
+
     ColorMask cm = getColorMask();
     if (_pen_size > 0) {
         _mask.drawFillCircle(x, y, _pen_size, cm);
-        _top_mask.drawFillCircle(x, y, _pen_size, cm);
+        if (idx != -1) {
+            mask_history[idx].drawFillCircle(x, y, _pen_size, cm);
+        } else {
+            _top_mask.drawFillCircle(x, y, _pen_size, cm);
+        }
+
     } else {
         _mask.drawPixel(x, y, cm);
-        _top_mask.drawPixel(x, y, cm);
+        if (idx != -1) {
+            mask_history[idx].drawPixel(x, y, cm);
+        } else {
+            _top_mask.drawPixel(x, y, cm);
+        }
     }
 
     update();
@@ -438,40 +578,30 @@ void ImageCanvas::_drawFillCircle(QMouseEvent * e) {
 
 ColorMask ImageCanvas::getColorMask(bool smart) {
 
-    ColorMask mask_color = _color;
-    ColorMask smart_color = mask_color;
+    ColorMask cm;
+    cm.color = _ui->id_labels[_cid]->color;
+    cm.id = QColor(_cid, _cid, _cid);
 
-    int idx = getSelectedBox();
-
-    // If a box is selected, modify the drawing operation
-    if (idx != -1) {
-        QColor bbox_color = box_list[idx].getMaskColor();    setPixmap(QPixmap::fromImage(_image));
-
-
-        int id = _ui->id_labels.getIdFromR(bbox_color.red());
-
-        mask_color.id = QColor(id, id, id);
-        mask_color.color = _ui->id_labels[id]->color;
-
-        smart_color.id = mask_color.id;
-        smart_color.color = bbox_color;
-    } else {
-        smart_color = _mask.getSmartColorMask(mask_color, _instance_num);
-    }
-
-    if (smart) {
-        return smart_color;
-    } else {
-        return mask_color;
-    }
+    return cm;
 }
 
 void ImageCanvas::_fill(QMouseEvent *e){
     cv::Point p = getXYonImage(e);
     int x = p.x;
     int y = p.y;
+
+    int idx = getSelectedBox();
+
     _mask.fill(x, y, getColorMask(false),_ui->id_labels);
-    _smart_mask.fill(x, y, getColorMask(true));
+
+    if (idx != -1)
+    {
+        mask_history[idx].fill(x, y, getColorMask(false),_ui->id_labels);
+    }
+    else
+    {
+        _top_mask.fill(x, y, getColorMask(false),_ui->id_labels);
+    }
 }
 
 void ImageCanvas::_startMarkingBoundingBox(QMouseEvent *e){
@@ -498,7 +628,14 @@ void ImageCanvas::redrawBoundingBox(int except_index){
         if(i == except_index){
             continue;
         }
-        box_list[i].draw(_image_mat);//
+        if (box_list[i].is_selected())
+        {
+            box_list[i].draw_marked(_image_mat);
+        } else {
+            box_list[i].draw(_image_mat);
+        }
+
+
     }
     _image = mat2QImage(_image_mat);
 }
@@ -535,7 +672,7 @@ void ImageCanvas::wheelEvent(QWheelEvent * event) {
 
 void ImageCanvas::keyPressEvent(QKeyEvent * event) {
     if (event->key() == Qt::Key_Enter) {
-        regenerate();
+        //regenerate();
 
 
         //emit(_ui->button_smart_mask->released());
@@ -544,14 +681,7 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
         if (idx != -1)
         {
             delete_layer(idx);
-            return;
-            _operation_mode = DRAW_MODE;
-            for (auto bbox : box_list) {
-                bbox.unselect();
-            }
-            _op_manager->delete_bbox(box_list[idx]);
-            redrawBoundingBox();
-            update();
+            clear_box_selection();
         }
     }
 }
@@ -604,6 +734,8 @@ void ImageCanvas::restore_last_layer()
     update();
 }
 
+//TODO: Optimize suggestion:
+//  Could store images as cv::Mat rather than QImage, would reduce QImage->Mat conversions
 void ImageCanvas::regenerate() {
     box_list.clear();
     clearMask();
@@ -640,6 +772,14 @@ void ImageCanvas::regenerate() {
     _mask.color = mat2QImage(color_mat);
     redrawBoundingBox();
     update();
+}
+
+void ImageCanvas::clear_box_selection()
+{
+    for (auto bbox : box_list)
+    {
+        bbox.unselect();
+    }
 }
 
 void ImageCanvas::setImageMask(const ImageMask & mask) {
@@ -679,11 +819,6 @@ void ImageCanvas::undo() {
 void ImageCanvas::redo() {
     restore_last_layer();
     return;
-    if (_operation_mode == DRAW_MODE) {
-        _op_manager->redo();
-    }
-    update();
-    _ui->undo_action->setEnabled(true);
 }
 
 std::string ImageCanvas::getObjectString(){

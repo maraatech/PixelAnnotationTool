@@ -116,15 +116,18 @@ void ImageMask::fill(int x, int y, ColorMask cm, const Id2Labels & id_labels) {
     //color
     cv::Mat id_mat = qImage2Mat(id);
 	cv::floodFill(id_mat, cv::Point(x, y), cv::Scalar(cm.id.red(), cm.id.green(), cm.id.blue()), 0, cv::Scalar(0, 0, 0), cv::Scalar(0, 0, 0));
-    //cv::imshow("showing buffer",id_mat);
-	id = mat2QImage(id_mat);
-	color = idToColor(id, id_labels);
+
+//    cv::imshow("showing buffer",id_mat);
+//    cv::waitKey(0);
+
+    id = mat2QImage(id_mat);
+    color = idToColor(id, id_labels);
 }
 
 void ImageMask::fill(int x, int y, ColorMask cm) {
-	cv::Mat color_mat = qImage2Mat(color);
+    cv::Mat color_mat = qImage2Mat(color);
 	cv::floodFill(color_mat, cv::Point(x, y), cv::Scalar(cm.color.blue(), cm.color.green(), cm.color.red()), 0, cv::Scalar(0, 0, 0), cv::Scalar(0, 0, 0));
-	color = mat2QImage(color_mat);
+    color = mat2QImage(color_mat);
 }
 
 void ImageMask::createBoundingBox(int x, int y){

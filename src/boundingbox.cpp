@@ -177,14 +177,6 @@ cv::Point BoundingBox::getMaxMaxPoint(){
     return cv::Point(_max_x, _max_y);
 }
 
-QColor BoundingBox::getMaskColor() {
-    return _mask_color;
-}
-
-void BoundingBox::setMaskColor(QColor color) {
-    _mask_color = color;
-}
-
 void BoundingBox::printBoxParam(){
     std::cout<<"box parameters are"<<cv::Point(_min_x,_min_y)<<cv::Point(_max_x,_max_y)<<" width:"<<getWidth()<<" height"<<getHeight()<<std::endl;
 }

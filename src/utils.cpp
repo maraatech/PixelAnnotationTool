@@ -113,8 +113,6 @@ BoundingBox findBoundingBox(cv::Mat const& img, const Id2Labels& id_label) {
 	finish_right_scan:
 
     auto bbox = BoundingBox(minmin, maxmax, name);
-    bbox.setMaskColor(target);
-
     return bbox;
 }
 

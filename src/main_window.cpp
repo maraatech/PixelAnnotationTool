@@ -88,11 +88,13 @@ void MainWindow::closeTab(int index) {
     if (ic == NULL)
         throw std::logic_error("error index");
 
-    if (ic->isNotSaved()) {
+    // Check if a tab needs saving based on whether it has a "*" at the end.
+    // Pretty hacky
+    if (tabWidget->tabText(index).endsWith("*")) {
         QMessageBox::StandardButton reply = QMessageBox::question(this, "Current image is not saved",
                                                                   "You will close the current image, Would you like saved image before ?", QMessageBox::Yes | QMessageBox::No);
         if (reply == QMessageBox::Yes) {
-            ic->saveMask();
+            ic->save();
         }
     }
     tabWidget->removeTab(index);
@@ -215,7 +217,7 @@ void MainWindow::updateConnect(const ImageCanvas * ic) {
     connect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
     connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
     connect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
-    connect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
+    connect(save_action, SIGNAL(triggered()), ic, SLOT(save()));
     connect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
 }
 
@@ -228,7 +230,7 @@ void MainWindow::allDisconnnect(const ImageCanvas * ic) {
     disconnect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
     disconnect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
     disconnect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
-    disconnect(save_action, SIGNAL(triggered()), ic, SLOT(saveMask()));
+    disconnect(save_action, SIGNAL(triggered()), ic, SLOT(save()));
     disconnect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
 }
 
@@ -268,7 +270,7 @@ int MainWindow::getImageCanvas(QString name, ImageCanvas * ic) {
     ic = newImageCanvas();
     QString iDir = currentDir();
     QString filepath(iDir + "/" + name);
-    ic->loadImage(filepath);
+    ic->load(filepath);
     int index = tabWidget->addTab(ic->getScrollParent(), name);
     
     return index;
@@ -315,6 +317,32 @@ void MainWindow::on_actionOpenDir_triggered() {
         return;
 
     curr_open_dir = openedDir;
+
+    // Setup folder structure for annotations
+    QString annotation_folder = QDir(curr_open_dir).filePath("annotation");
+    source_images = QDir(QDir(annotation_folder)).filePath("jpgs");
+    mask_annotations = QDir(QDir(annotation_folder)).filePath("trimaps");
+    xml_annotations = QDir(QDir(annotation_folder)).filePath("xmls");
+
+    if (!QDir(annotation_folder).exists())
+    {
+        QDir().mkdir(annotation_folder);
+    }
+
+    if (!QDir(source_images).exists())
+    {
+        QDir().mkdir(source_images);
+    }
+
+    if (!QDir(mask_annotations).exists())
+    {
+        QDir().mkdir(mask_annotations);
+    }
+
+    if (!QDir(xml_annotations).exists())
+    {
+        QDir().mkdir(xml_annotations);
+    }
 
     QTreeWidgetItem *currentTreeDir = new QTreeWidgetItem(tree_widget_img);
     tree_widget_img->setItemExpanded(currentTreeDir, true);

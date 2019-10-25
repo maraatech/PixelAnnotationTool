@@ -36,10 +36,10 @@ class BoundingBox{
         int getHeight();
         void printBoxParam();
         std::string toXML();
-        std::string getId(){return _id;};
+        std::string getId(){return _id;}
 
-        void setMaskColor(QColor color);
-        QColor getMaskColor();
+        void setObjectName(std::string object_name) {_object_name = object_name;}
+        std::string getObjectName() {return _object_name;}
         
     private:
         std::string _object_name;
