@@ -21,6 +21,7 @@
 MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {
     setupUi(this);
+	std::cout << "TEST" << std::endl;
     setFocusPolicy(Qt::StrongFocus);
     setWindowTitle(QApplication::translate("MainWindow", "PixelAnnotationTool " PIXEL_ANNOTATION_TOOL_GIT_TAG, Q_NULLPTR));
     list_label->setSpacing(1);
@@ -70,11 +71,13 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags) : QMainWindow(par
     connect(open_dir_action       , SIGNAL(triggered())                       , this, SLOT(on_actionOpenDir_triggered()));
     labels = defaulfLabels();
 
+	std::cout << "TEST2" << std::endl;
     loadConfig(QCoreApplication::applicationDirPath() + "/../config.json");
     connect(list_label, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changeLabel(QListWidgetItem*, QListWidgetItem*)));
     connect(list_label, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(changeColor(QListWidgetItem*)));
 
     list_label->setEnabled(false);
+	std::cout << "TEST3" << std::endl;
 }
 
 void MainWindow::closeCurrentTab() {
@@ -209,6 +212,7 @@ void MainWindow::setStarAtNameOfTab(bool star) {
 }
 
 void MainWindow::updateConnect(const ImageCanvas * ic) {
+	std::cout << "updateConnect*" << std::endl;
     if (ic == NULL) return;
     connect(spinbox_scale, SIGNAL(valueChanged(double)), ic, SLOT(scaleChanged(double)));
     connect(spinbox_alpha, SIGNAL(valueChanged(double)), ic, SLOT(alphaChanged(double)));
@@ -216,9 +220,11 @@ void MainWindow::updateConnect(const ImageCanvas * ic) {
     connect(checkbox_manuel_mask, SIGNAL(clicked()), ic, SLOT(update()));
     connect(actionClear, SIGNAL(triggered()), ic, SLOT(clearMask()));
     connect(undo_action, SIGNAL(triggered()), ic, SLOT(undo()));
+	std::cout << "updateConnect*2" << std::endl;
     connect(redo_action, SIGNAL(triggered()), ic, SLOT(redo()));
     connect(save_action, SIGNAL(triggered()), ic, SLOT(save()));
     connect(smart_mask_action, SIGNAL(triggered()), ic, SLOT(smartMask()));
+	std::cout << "updateConnect*3" << std::endl;
 }
 
 void MainWindow::allDisconnnect(const ImageCanvas * ic) {
@@ -235,14 +241,19 @@ void MainWindow::allDisconnnect(const ImageCanvas * ic) {
 }
 
 ImageCanvas * MainWindow::newImageCanvas() {
+	std::cout << "newImageCanvas" << std::endl;
     ImageCanvas * ic = new ImageCanvas( this);
+	std::cout << "newImageCanvas2" << std::endl;
     ic->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+	
     ic->setScaledContents(true);
     updateConnect(ic);
+	std::cout << "newImageCanvas3" << std::endl;
     return ic;
 }
 
 void MainWindow::updateConnect(int index) {
+	std::cout << "updateConnect" << std::endl;
     if (index < 0 || index >= tabWidget->count())
         return;
     allDisconnnect(image_canvas);
@@ -261,17 +272,22 @@ ImageCanvas * MainWindow::getImageCanvas(int index) {
 }
 
 int MainWindow::getImageCanvas(QString name, ImageCanvas * ic) {
+	std::cout << "getImageCanvas" << std::endl;
     for (int i = 0; i < tabWidget->count(); i++) {
         if (tabWidget->tabText(i).startsWith(name) ) {
             ic = getImageCanvas(i);
             return i;
         }
     }
+	std::cout << "getImageCanvas2" << std::endl;
     ic = newImageCanvas();
     QString iDir = currentDir();
-    QString filepath(iDir + "/" + name);
+    QString filepath = QDir(iDir).filePath(name);
+	std::cout << "getImageCanvas3" << std::endl;
     ic->load(filepath);
+	std::cout << "getImageCanvas3.5" << std::endl;
     int index = tabWidget->addTab(ic->getScrollParent(), name);
+	std::cout << "getImageCanvas4" << std::endl;
     
     return index;
 }

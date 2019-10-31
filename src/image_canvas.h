@@ -34,7 +34,6 @@ public:
 
     void refresh();
     void updateMaskColor(const Id2Labels & labels) { _mask.updateColor(labels); }
-    void loadImage(const QString &file);
     void load(const QString &filename);
     QScrollArea * getScrollParent() const { return _scroll_parent; }
     bool isNotSaved();
@@ -44,7 +43,6 @@ public:
     void drawMarkedBoundingBox(BoundingBox b);
     void drawBoundingBox(BoundingBox b);
     std::string getObjectString();
-    void saveAnnotation();
 
     void regenerate();
 
@@ -64,14 +62,12 @@ public slots :
     void setSizePen(int);
     void clearMask();
     void save();
-    void saveMask();
     void smartMask();
     void undo();
     void redo();
 
 private:
     MainWindow *_ui;
-    OperationManager *_op_manager;
 
     void _initPixmap();
     void _drawFillCircle(QMouseEvent * e);
@@ -80,7 +76,7 @@ private:
     void _drawBoundingBox(QMouseEvent *e);
     cv::Point getXYonImage(QMouseEvent *e);
     cv::Point getXYonImage(int x_gui, int y_gui);
-    void parseXML(QString file_name);
+    BoundingBox parseXML(QString file_name);
 
     std::string createXML(BoundingBox bbox);
 

@@ -37,7 +37,34 @@ Mask MaskDiff::removeDiff(Mask mask) {
 ImageMask::ImageMask() {}
 
 ImageMask::ImageMask(const QString &file, Id2Labels id_labels) {
+	std::cout << "Reading1: " <<  file.toStdString() << std::endl;
 	id = mat2QImage(cv::imread(file.toStdString()));
+	color = idToColor(id, id_labels);
+}
+
+ImageMask::ImageMask(const QString &file, Id2Labels id_labels, LabelInfo class_label) {
+	cv::Mat id_mat = cv::imread(file.toStdString());
+	// Convert id to correct value
+	std::cout << "Label Name: " << class_label.name.toStdString() << std::endl;
+	
+	for (int i = 0; i < id_mat.rows; i++)
+	{
+		for (int j = 0; j < id_mat.cols; j++)
+		{
+			auto pixel = id_mat.at<cv::Vec3b>(i,j);
+			
+			if (cv::sum(pixel)[0] != 0)
+			{
+				pixel[2] = class_label.id;
+				pixel[1] = class_label.id;
+				pixel[0] = class_label.id;
+				
+				id_mat.at<cv::Vec3b>(i,j) = pixel;
+			}
+		}
+	}
+	
+	id = mat2QImage(id_mat);
 	color = idToColor(id, id_labels);
 }
 
@@ -128,6 +155,32 @@ void ImageMask::fill(int x, int y, ColorMask cm) {
     cv::Mat color_mat = qImage2Mat(color);
 	cv::floodFill(color_mat, cv::Point(x, y), cv::Scalar(cm.color.blue(), cm.color.green(), cm.color.red()), 0, cv::Scalar(0, 0, 0), cv::Scalar(0, 0, 0));
     color = mat2QImage(color_mat);
+}
+
+void ImageMask::collapseMask(ImageMask mask)
+{
+    cv::Mat id_mat = qImage2Mat(id);
+    cv::Mat color_mat = qImage2Mat(color);
+	
+	cv::Mat mask_id = qImage2Mat(mask.id);
+	cv::Mat mask_color = qImage2Mat(mask.color);
+	
+	
+	for (int i = 0; i < id_mat.rows; i++)
+	{
+		for (int j = 0; j < id_mat.cols; j++)
+		{
+			auto pixel = id_mat.at<cv::Vec3b>(i,j);
+			if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0)
+			{
+				id_mat.at<cv::Vec3b>(i,j) = mask_id.at<cv::Vec3b>(i,j);
+				color_mat.at<cv::Vec3b>(i,j) = mask_color.at<cv::Vec3b>(i,j);
+			}
+		}
+	}
+	
+	id = mat2QImage(id_mat);
+    color = mat2QImage(color_mat);	
 }
 
 void ImageMask::createBoundingBox(int x, int y){

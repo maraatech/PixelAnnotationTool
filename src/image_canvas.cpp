@@ -13,6 +13,8 @@
 ImageCanvas::ImageCanvas(MainWindow *ui) :
     QLabel() ,
     _ui(ui){
+		
+	std::cout << "ImageCanvas Constructor"<<std::endl;
 
     _scroll_parent = new QScrollArea(ui);
     setParent(_scroll_parent);
@@ -20,17 +22,18 @@ ImageCanvas::ImageCanvas(MainWindow *ui) :
     _scale = _ui->spinbox_scale->value();
     _alpha = _ui->spinbox_alpha->value();
     _pen_size = _ui->spinbox_pen_size->value();
+	std::cout << "ImageCanvas Constructor2"<<std::endl;
     _initPixmap();
     setScaledContents(true);
     setMouseTracking(true);
     _button_is_pressed = false;
+	std::cout << "ImageCanvas Constructor3"<<std::endl;
 
     _scroll_parent->setBackgroundRole(QPalette::Dark);
     _scroll_parent->setWidget(this);
     _operation_mode = DRAW_MODE;
     _instance_num = 0;
-
-    _op_manager = new OperationManager(this);
+	std::cout << "ImageCanvas Constructor4"<<std::endl;
 }
 
 ImageCanvas::~ImageCanvas() {
@@ -38,7 +41,7 @@ ImageCanvas::~ImageCanvas() {
 }
 
 bool ImageCanvas::isNotSaved() { 
-    return _op_manager->num_ops() > 0;
+    return true;
 }
 
 void ImageCanvas::_initPixmap() {
@@ -52,72 +55,44 @@ void ImageCanvas::_initPixmap() {
     setPixmap(newPixmap);
 }
 
-void ImageCanvas::loadImage(const QString &filename) {
-    if (!_image.isNull() )
-        save();
-
-    _img_file = filename;
-    QFileInfo file(_img_file);
-
-    if (!file.exists()) return;
-
-    _image = mat2QImage(cv::imread(_img_file.toStdString()));
-    _orig_image = _image.copy();
-
-    _mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_color_mask.png";
-    _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + "_bbox.xml";
-
-    if (QFile(_mask_file).exists()) {
-        _mask = ImageMask(_mask_file,_ui->id_labels);
-        _top_mask = ImageMask(_image.size());
-        _ui->checkbox_manuel_mask->setChecked(true);
-    } else {
-        clearMask();
-    }
-
-    parseXML(_annotation_file);
-    _ui->undo_action->setEnabled(true);
-    _ui->redo_action->setEnabled(true);
-
-    setPixmap(QPixmap::fromImage(_image));
-    resize(_scale *_image.size());
-    redrawBoundingBox();
-}
-
-void ImageCanvas::parseXML(QString file_name){
+BoundingBox ImageCanvas::parseXML(QString file_name){
     // Create a document to write XML
     QDomDocument document;
     // Open a file for reading
     QFile file(file_name);
+	std::cout << "Reading XML!" << std::endl;
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         std::cout << "cant find file."<<file_name.toStdString()<<std::endl;
-        return;
+        return BoundingBox();
     }else{
         // loading
         if(!document.setContent(&file))
         {
             std::cout << "Failed to load the file for reading.";
-            return;
+            return BoundingBox();
         }
         file.close();
     }
     // Getting root element
     QDomElement root = document.firstChildElement();
+	
     QDomNodeList nodes = root.elementsByTagName("object");
     for(int i = 0; i < nodes.count(); i++) {
         QDomElement boundbox_node = nodes.at(i).toElement().elementsByTagName("bndbox").at(0).toElement();
-        QString name = boundbox_node.elementsByTagName("name").at(0).firstChild().toText().data();
+        QString name = root.elementsByTagName("name").at(0).firstChild().toText().data();
+		std::cout << "Name: " <<  root.elementsByTagName("name").at(0).firstChild().toText().data().toStdString() << std::endl;
         int min_x = boundbox_node.elementsByTagName("xmin").at(0).firstChild().toText().data().toInt();
         int max_x = boundbox_node.elementsByTagName("xmax").at(0).firstChild().toText().data().toInt();
         int min_y = boundbox_node.elementsByTagName("ymin").at(0).firstChild().toText().data().toInt();
         int max_y = boundbox_node.elementsByTagName("ymax").at(0).firstChild().toText().data().toInt();
 
         auto bbox = BoundingBox(cv::Point(min_x,min_y),cv::Point(max_x, max_y),name.toStdString());
-
-        box_list.push_back(bbox);
+		
+		return bbox;
     }
-    return;
+	std::cout << "DONE XML!" << std::endl;
+    return BoundingBox();
 }
 
 void ImageCanvas::smartMask() {
@@ -126,6 +101,8 @@ void ImageCanvas::smartMask() {
 
     if (index != -1)
     {
+		cv::imshow("HELLO", qImage2Mat(mask_history[index].id));
+		cv::waitKey(0);
         //~~~ Modify existing layer ~~~//
         // 1. Modify bounding box
         BoundingBox bbox = findBoundingBox(qImage2Mat(mask_history[index].id), _ui->id_labels);
@@ -164,7 +141,7 @@ void ImageCanvas::load(const QString &filename) {
 
     // Load image
 
-
+	std::cout << "Reading2: " << file.absoluteFilePath().toStdString() << std::endl;
     _image = mat2QImage(cv::imread(file.absoluteFilePath().toStdString()));
     _orig_image = _image.copy();
 
@@ -187,10 +164,15 @@ void ImageCanvas::load(const QString &filename) {
         }
 
         existingData = true;
+		
+		auto bbox = parseXML(xml_abs_path);
+		box_list.push_back(bbox);
+		
+		std::cout << "Obj Name: " << bbox.getObjectName() << std::endl;
 
-        ImageMask mask(mask_abs_path, _ui->id_labels);
+		LabelInfo class_label = _ui->labels[QString::fromStdString(bbox.getObjectName())];
+        ImageMask mask(mask_abs_path, _ui->id_labels, class_label);
         mask_history.push_back(mask);
-        parseXML(xml_abs_path);
     }
 
     if (!existingData)
@@ -199,35 +181,14 @@ void ImageCanvas::load(const QString &filename) {
     }
     else
     {
+		std::cout << "Regenerating" << std::endl;
         regenerate();
     }
-
+	std::cout << "Set Pixmap" << std::endl;
     setPixmap(QPixmap::fromImage(_image));
     resize(_scale *_image.size());
     redrawBoundingBox();
-
-//    _mask_file = file.dir().absolutePath()+ "/" + file.baseName() + "_color_mask.png";
-//    _annotation_file = file.dir().absolutePath()+ "/xml/" + file.baseName() + "_bbox.xml";
-
-//    if (QFile(_mask_file).exists()) {
-//        _mask = ImageMask(_mask_file,_ui->id_labels);
-//        _top_mask = ImageMask(_image.size());
-//        _ui->checkbox_manuel_mask->setChecked(true);
-//    } else {
-//        clearMask();
-//    }
-
-//    parseXML(_annotation_file);
-//    _ui->undo_action->setEnabled(true);
-//    _ui->redo_action->setEnabled(true);
-
-//    setPixmap(QPixmap::fromImage(_image));
-//    resize(_scale *_image.size());
-//    redrawBoundingBox();
-
-
-
-    // Load Bounding Boxes
+	std::cout << "Done with load" << std::endl;
 }
 
 void ImageCanvas::save() {
@@ -249,7 +210,27 @@ void ImageCanvas::save() {
         QString mask_abs_path = QDir(_ui->mask_annotations).filePath(mask_filename);
         QString xml_abs_path = QDir(_ui->xml_annotations).filePath(bounding_box_filename);
 
-        mask.id.save(mask_abs_path);
+        //mask.id.save(mask_abs_path);
+		cv::Mat id_mat = qImage2Mat(mask.id);
+		
+		for (int i = 0; i < id_mat.rows; i++)
+		{
+			for (int j = 0; j < id_mat.cols; j++)
+			{
+				auto pixel = id_mat.at<cv::Vec3b>(i,j);
+				if (cv::sum(pixel)[0] != 0)
+				{
+					pixel[0] = 1;
+					pixel[1] = 1;
+					pixel[2] = 1;
+					
+					id_mat.at<cv::Vec3b>(i,j) = pixel;
+				}
+				
+			}
+		}
+		
+		cv::imwrite(mask_abs_path.toStdString(), id_mat);
 
         auto xml_string = createXML(bbox);
 
@@ -268,22 +249,6 @@ void ImageCanvas::save() {
 
     QFile::copy(file.absoluteFilePath(), source_abs_path);
 
-    _ui->setStarAtNameOfTab(false);
-}
-
-
-void ImageCanvas::saveMask() {
-    if (isFullZero(_mask.id))
-        return;
-
-
-    _mask.id.save(_mask_file);
-    QFileInfo file(_img_file);
-
-    QString color_file = file.dir().absolutePath() + "/" + file.baseName() + "_color_mask.png";
-    _mask.color.save(color_file);
-    _smart_mask.color.save(_smart_mask_file);
-    saveAnnotation();
     _ui->setStarAtNameOfTab(false);
 }
 
@@ -330,33 +295,6 @@ std::string ImageCanvas::createXML(BoundingBox bbox)
     xml_text += "</annotation>";
 
     return xml_text;
-}
-
-void ImageCanvas::saveAnnotation(){
-    QFileInfo file(_img_file);
-    //create text
-    std::string text ="<annotation>\n\
-            <folder>0</folder>\n\
-            <filename>"+ file.baseName().toStdString()+"</filename>\n\
-            <path>"+file.dir().absolutePath().toStdString() + "/" + file.baseName().toStdString()+"</path>\n\
-            <source>\n\
-            \t<database>Unknown</database>\n\
-            </source>\n\
-            <size>\n\
-            \t<width>"+std::to_string(width())+"</width>\n\
-            \t<height>"+std::to_string(height())+"</height>\n\
-            \t<depth>3</depth>\n\
-            </size>\n\
-            <segmented>0</segmented>\n";
-            for(BoundingBox b:box_list){
-            text+=b.toXML();
-}
-            text = text+ "\n</annotation>";
-    std::string file_name = file.dir().absolutePath().toStdString() + "/xml/"+file.baseName().toStdString()+"_bbox.xml";
-    std::ofstream out(file_name);
-    out << text;
-    out.close();
-    std::cout<<"saving xml"<<file_name<<std::endl;
 }
 
 void ImageCanvas::scaleChanged(double scale) {
@@ -508,7 +446,7 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent * e) {
         std::cout<<"mouse released"<<getXYonImage(e)<<std::endl;
         _button_is_pressed = false;
         if(_operation_mode == DRAW_MODE){
-            _op_manager->save_draw();
+            //_op_manager->save_draw();
         }
         _ui->setStarAtNameOfTab(true);
     }
@@ -592,15 +530,17 @@ void ImageCanvas::_fill(QMouseEvent *e){
 
     int idx = getSelectedBox();
 
-    _mask.fill(x, y, getColorMask(false),_ui->id_labels);
+    //_mask.fill(x, y, getColorMask(false),_ui->id_labels);
 
     if (idx != -1)
     {
         mask_history[idx].fill(x, y, getColorMask(false),_ui->id_labels);
+		_mask.collapseMask(mask_history[idx]);
     }
     else
     {
         _top_mask.fill(x, y, getColorMask(false),_ui->id_labels);
+		_mask.collapseMask(_top_mask);
     }
 }
 
@@ -739,37 +679,16 @@ void ImageCanvas::restore_last_layer()
 void ImageCanvas::regenerate() {
     box_list.clear();
     clearMask();
-    // Might have to set image here
-    cv::Mat id_mat = qImage2Mat(_mask.id);
-    cv::Mat color_mat = qImage2Mat(_mask.color);
     for (auto m : mask_history)
     {
-        cv::Mat img_id = qImage2Mat(m.id);
-        cv::Mat img_color = qImage2Mat(m.color);
-
         // Add BBOX
-
-        BoundingBox bbox = findBoundingBox(img_id, _ui->id_labels);
+        BoundingBox bbox = findBoundingBox(qImage2Mat(m.id), _ui->id_labels);
         box_list.push_back(bbox);
 
-        // Layer masks
-
-        for (int i = 0; i < img_id.rows; i++)
-        {
-            for (int j = 0; j < img_id.cols; j++)
-            {
-                auto pixel = id_mat.at<cv::Vec3b>(i,j);
-                if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0)
-                {
-                    id_mat.at<cv::Vec3b>(i,j) = img_id.at<cv::Vec3b>(i,j);
-                    color_mat.at<cv::Vec3b>(i,j) = img_color.at<cv::Vec3b>(i,j);
-                }
-            }
-        }
+        // Add mask
+		_mask.collapseMask(m);
     }
 
-    _mask.id = mat2QImage(id_mat);
-    _mask.color = mat2QImage(color_mat);
     redrawBoundingBox();
     update();
 }

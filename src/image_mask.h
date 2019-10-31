@@ -34,6 +34,7 @@ struct ImageMask {
 
     ImageMask();
     ImageMask(const QString &file, Id2Labels id_labels);
+	ImageMask(const QString &file, Id2Labels id_labels, LabelInfo label);
     ImageMask(QSize s);
 
     Mask getMask();
@@ -52,6 +53,8 @@ struct ImageMask {
     cv::Scalar getColor(QColor& color);
     void createBoundingBox(int x, int y);
     void drawBoundingBox(int orig_x, int orig_y, int x, int y);
+	
+	void collapseMask(ImageMask mask);
 };
 
 class State{
