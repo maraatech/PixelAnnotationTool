@@ -335,7 +335,9 @@ void MainWindow::on_actionOpenDir_triggered() {
     curr_open_dir = openedDir;
 
     // Setup folder structure for annotations
-    QString annotation_folder = QDir(curr_open_dir).filePath("annotation");
+	QDir current = QDir(curr_open_dir);
+	current.cdUp();
+    QString annotation_folder = current.filePath("");
     source_images = QDir(QDir(annotation_folder)).filePath("jpgs");
     mask_annotations = QDir(QDir(annotation_folder)).filePath("trimaps");
     xml_annotations = QDir(QDir(annotation_folder)).filePath("xmls");

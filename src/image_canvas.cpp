@@ -101,8 +101,6 @@ void ImageCanvas::smartMask() {
 
     if (index != -1)
     {
-		cv::imshow("HELLO", qImage2Mat(mask_history[index].id));
-		cv::waitKey(0);
         //~~~ Modify existing layer ~~~//
         // 1. Modify bounding box
         BoundingBox bbox = findBoundingBox(qImage2Mat(mask_history[index].id), _ui->id_labels);
@@ -123,6 +121,7 @@ void ImageCanvas::smartMask() {
 
 
     redrawBoundingBox();
+	update();
     _top_mask = ImageMask(_image.size());
     return;
 }
