@@ -11,7 +11,7 @@
             "id_categorie": 0,
             "name": "applelet"
         },
-        "unlabeled": {
+        "BG": {
             "categorie": "void",
             "color": [
                 0,
@@ -20,7 +20,7 @@
             ],
             "id": 0,
             "id_categorie": 0,
-            "name": "unlabeled"
+            "name": "BG"
         }
     }
 }

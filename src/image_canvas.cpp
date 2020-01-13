@@ -6,9 +6,11 @@
 #include <QtWidgets>
 #include <fstream>
 #include <QtXml>
+#include <set>
 
 #define MAX_PATH_LENGTH 260
 #define MAX_INSTANCE_COUNT 10000
+#define MINIMUM_BOX_AREA 10 // Consider making configurable
 
 ImageCanvas::ImageCanvas(MainWindow *ui) :
     QLabel() ,
@@ -162,15 +164,26 @@ void ImageCanvas::load(const QString &filename) {
             break;
         }
 
-        existingData = true;
+
 		
 		auto bbox = parseXML(xml_abs_path);
-		box_list.push_back(bbox);
+
+        existingData = true;
+
+
 		
 		std::cout << "Obj Name: " << bbox.getObjectName() << std::endl;
 
 		LabelInfo class_label = _ui->labels[QString::fromStdString(bbox.getObjectName())];
         ImageMask mask(mask_abs_path, _ui->id_labels, class_label);
+
+        int sum = cv::sum(cv::sum(qImage2Mat(mask.id)))[0];
+        if (sum == 0)
+        {
+            continue;
+        }
+
+        box_list.push_back(bbox);
         mask_history.push_back(mask);
     }
 
@@ -193,6 +206,21 @@ void ImageCanvas::load(const QString &filename) {
 void ImageCanvas::save() {
     QFileInfo file(_img_file);
 
+    // Remove all old XMls
+    QDir mask_dir(_ui->mask_annotations);
+    QDir xml_dir(_ui->xml_annotations);
+    xml_dir.setNameFilters(QStringList() << file.baseName() + "_*.xml");
+    xml_dir.setFilter(QDir::Files);
+
+    foreach (QString dirFile, xml_dir.entryList())
+    {
+        QString mask_abs_path = QDir(_ui->mask_annotations).filePath(QFileInfo(dirFile).baseName()+ ".png");
+        QString xml_abs_path = QDir(_ui->xml_annotations).filePath(QFileInfo(dirFile).baseName() + ".xml");
+
+        std::cout << "MASK:  " << mask_abs_path.toStdString() << "  XML:  " << xml_abs_path.toStdString() << std::endl;
+        QFile(mask_abs_path).remove();
+        QFile(xml_abs_path).remove();
+    }
 
     // Save each mask as seperate .png denoted by (Image ID)_XXXX.png
     // Save XML as (Image ID)_XXXX.xml
@@ -281,10 +309,10 @@ std::string ImageCanvas::createXML(BoundingBox bbox)
     xml_text += "\t\t<occluded>0</occluded>\n";
 
     xml_text += "\t\t<bndbox>\n";
-    xml_text += "\t\t\t<xmin>" + std::to_string(0) + "</xmin>\n";
-    xml_text += "\t\t\t<ymin>" + std::to_string(0) + "</ymin>\n";
-    xml_text += "\t\t\t<xmax>" + std::to_string(0) + "</xmax>\n";
-    xml_text += "\t\t\t<ymax>" + std::to_string(0) + "</ymax>\n";
+    xml_text += "\t\t\t<xmin>" + std::to_string(bbox.getMinMinPoint().x) + "</xmin>\n";
+    xml_text += "\t\t\t<ymin>" + std::to_string(bbox.getMinMinPoint().y) + "</ymin>\n";
+    xml_text += "\t\t\t<xmax>" + std::to_string(bbox.getMaxMaxPoint().x) + "</xmax>\n";
+    xml_text += "\t\t\t<ymax>" + std::to_string(bbox.getMaxMaxPoint().y) + "</ymax>\n";
     xml_text += "\t\t</bndbox>\n";
 
     xml_text += "\t\t<difficult>0</difficult>";

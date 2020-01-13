@@ -55,6 +55,7 @@ public:
     QAction        * redo_action  ;
     QAction        * open_dir_action  ;
     QString          curr_open_dir;
+    QString          annotation_dir;
     QString          xml_annotations;
     QString          source_images;
     QString          mask_annotations;
