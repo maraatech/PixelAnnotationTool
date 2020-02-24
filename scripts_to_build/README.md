@@ -34,25 +34,7 @@
 
 On ubuntu, PixelAnnotationTool need this pacakage (OpenCV and Qt5.9.1): 
 
-1. Install OpenCV
-    ```sh
-    sudo apt-get install build-essential cmake pkg-config
-    sudo apt-get install libjpeg8-dev libtiff5-dev libjasper-dev libpng12-dev
-    sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
-    sudo apt-get install libxvidcore-dev libx264-dev
-    sudo apt-get install libgtk-3-dev
-    sudo apt-get install libatlas-base-dev gfortran
-    sudo apt-get install python2.7-dev python3.5-dev
-    
-    cd ~
-    wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.1.0.zip
-    unzip opencv.zip
-    wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.1.0.zip
-    unzip opencv_contrib.zip
-    
-    sudo apt-get install mesa-common-dev
-    sudo apt-get install libopencv-dev python-opencv
-    ```
+1. Install OpenCV from [here](https://github.com/jayrambhia/Install-OpenCV)
 
 1. Install Qt
     ```sh
