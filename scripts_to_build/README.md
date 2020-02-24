@@ -33,23 +33,23 @@
 ## build and run on linux :
 
 On ubuntu, PixelAnnotationTool need this pacakage (OpenCV and Qt5.9.1): 
+
 1. Install Qt and OpenCV
-
-```sh
-sudo apt-get install mesa-common-dev
-sudo apt-get install libopencv-dev python-opencv
-wget http://download.qt.io/official_releases/qt/5.9/5.9.1/qt-opensource-linux-x64-5.9.1.run
-chmod +x qt-opensource-linux-x64-5.9.1.run
-./qt-opensource-linux-x64-5.9.1.run
-
-```
+    ```sh
+    sudo apt-get install mesa-common-dev
+    sudo apt-get install libopencv-dev python-opencv
+    wget http://download.qt.io/official_releases/qt/5.9/5.9.1/qt-opensource-linux-x64-5.9.1.run
+    chmod +x qt-opensource-linux-x64-5.9.1.run
+    ./qt-opensource-linux-x64-5.9.1.run
+    ```
 1. Install Cuda 8.0
-```
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-sudo apt-get update
-sudo apt-get install cuda=8.0
-```
+    ```
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+    sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+    sudo apt-get update
+    sudo apt-get install cuda=8.*
+    ```
+    1. If you are running into NO PUBKEY errors look [here](https://askubuntu.com/questions/20725/gpg-error-the-following-signatures-couldnt-be-verified-because-the-public-key)
 1. Edit [build_linux.sh](https://github.com/maraatech/PixelAnnotationTool/blob/master/scripts_to_build/build_linux.sh)
 	1. Change -DQT5_DIR to correct QT directory
 	1. Change -DCUDA_TOOLKIT_ROOT_DIR to correct Cuda 8.0 directory IF REQUIRED
