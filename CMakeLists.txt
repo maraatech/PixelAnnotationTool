@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.2)
 project(PixelAnnotationTool)
 
 # Substitute the correct paths into the following variables.
-set(CMAKE_PREFIX_PATH "/home/anyone/opencv/build" CACHE STRING "Path to opencv build folder containing OpenCVConfig.cmake")
-set(QT5_DIR "/home/anyone/Qt5.9.1/5.9.1/gcc_64/lib/cmake" CACHE STRING "Path to QT5Xml folder containing Qt5XmlConfigVersion.cmake")
-set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-8.0" CACHE STRING "Path to cuda version 8.0")
+set(CMAKE_PREFIX_PATH "/path/to/opencv" CACHE STRING "Path to opencv build folder containing OpenCVConfig.cmake")
+set(QT5_DIR "/path/to/qt5" CACHE STRING "Path to QT5 CMake folder")
+
+# Comment out if cuda is not available or desired
+# set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-8.0" CACHE STRING "Path to cuda version 8.0")
 
 
 set(CMAKE_AUTOMOC ON)
@@ -53,6 +55,7 @@ endif()
 
 find_path(Qt5Widgets_DIR Qt5WidgetsConfig.cmake PATHS "${QT5_DIR}/Qt5Widgets" )
 find_path(Qt5Gui_DIR Qt5GuiConfig.cmake         PATHS "${QT5_DIR}/Qt5Gui"     )
+find_path(Qt5Xml_DIR Qt5XmlConfig.cmake			PATHS "${QT5_DIR}/Qt5Xml"	  )
 	
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Xml REQUIRED)
@@ -83,7 +86,7 @@ add_executable(PixelAnnotationTool MACOSX_BUNDLE WIN32
 	src/label_widget.cpp 
 	src/main.cpp 
 	${UI_TEST_HDRS})
-target_link_libraries(PixelAnnotationTool Qt5::Gui Qt5::Widgets ${OpenCV_LIBS} Qt5::Xml)	
+target_link_libraries(PixelAnnotationTool Qt5::Gui Qt5::Widgets Qt5::Xml ${OpenCV_LIBS})	
 add_custom_command(TARGET PixelAnnotationTool PRE_BUILD COMMAND cmake -P ${CMAKE_BINARY_DIR}/git_version.cmake)
 
 set(OpenCV_BIN ${OpenCV_LIB_PATH}/../bin)
@@ -110,7 +113,8 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/default.png DESTINATION ${DIR_NAME_RELEASE
 if( MSVC )  # ---------------------------- WINDOWS --------------------------------------------------------------------
     set(DLLs_DEP_RELEASE "${QT5_DIR}/../../bin/Qt5Widgets.dll"
                          "${QT5_DIR}/../../bin/Qt5Gui.dll"
-                         "${QT5_DIR}/../../bin/Qt5Core.dll")
+                         "${QT5_DIR}/../../bin/Qt5Core.dll"
+						 "${QT5_DIR}/../../bin/Qt5Xml.dll")
     set(DLLs_DEP_DEBUG   "${QT5_DIR}/../../bin/Qt5Widgetsd.dll"
                          "${QT5_DIR}/../../bin/Qt5Xmld.dll"
                          "${QT5_DIR}/../../bin/Qt5Guid.dll"
