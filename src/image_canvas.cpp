@@ -99,6 +99,7 @@ BoundingBox ImageCanvas::parseXML(QString file_name){
 
 void ImageCanvas::smartMask() {
 
+	std::cout << "SMART OP" << std::endl;
     int index = getSelectedBox();
 
     if (index != -1)
@@ -121,6 +122,13 @@ void ImageCanvas::smartMask() {
         box_list.push_back(bbox);
     }
 
+	WindowState state;
+	state.bbox_list = box_list;
+	state.mask = _mask;
+
+	state_history.push_back(state);
+	std::cout << "History Length: " << state_history.size() << std::endl;
+	delete_state_history = std::stack<WindowState>();
 
     redrawBoundingBox();
 	update();
@@ -672,6 +680,30 @@ void ImageCanvas::delete_layer(int index)
 
 void ImageCanvas::delete_last_layer()
 {
+	if (state_history.size() == 0)
+	{
+		return;
+	}
+
+	clear();
+
+	WindowState last_state = state_history.back();
+	state_history.pop_back();
+	delete_state_history.push(last_state);
+
+	last_state = state_history.back();
+
+	_mask = last_state.mask;
+	box_list = last_state.bbox_list;
+
+	std::cout << "DELETE LAST REDRAW" << std::endl;
+	redrawBoundingBox();
+	std::cout << "DELETE LAST UPDATE" << std::endl;
+	update();
+
+
+	
+	/*
     if (mask_history.size() == 0)
     {
         return;
@@ -683,10 +715,27 @@ void ImageCanvas::delete_last_layer()
     regenerate();
     redrawBoundingBox();
     update();
+	*/
 }
 
 void ImageCanvas::restore_last_layer()
 {
+	std::cout << "RESTORE 1" << std::endl;
+	if (delete_state_history.empty())
+	{
+		return;
+	}
+	std::cout << "RESTORE 2" << std::endl;
+
+	WindowState last_state = delete_state_history.top();
+	delete_state_history.pop();
+	state_history.push_back(last_state);
+	_mask = last_state.mask;
+	box_list = last_state.bbox_list;
+	redrawBoundingBox();
+	update();
+
+	/*
     if (delete_stack.empty())
     {
         return;
@@ -699,11 +748,13 @@ void ImageCanvas::restore_last_layer()
     regenerate();
     redrawBoundingBox();
     update();
+	*/
 }
 
 //TODO: Optimize suggestion:
 //  Could store images as cv::Mat rather than QImage, would reduce QImage->Mat conversions
 void ImageCanvas::regenerate() {
+	std::cout << "Regenerating" << std::endl;
     box_list.clear();
     clearMask();
     for (auto m : mask_history)
@@ -749,20 +800,22 @@ void ImageCanvas::refresh() {
 
 
 void ImageCanvas::undo() {
+	std::cout << "UNDO" << std::endl;
     auto top_mask_mat = qImage2Mat(_top_mask.id);
     cv::Scalar sum = cv::sum(top_mask_mat);
     if (cv::sum(sum)[0] > 0)
     {
         // Pretty slow
-        regenerate();
+        //regenerate();
         return;
     }
-
-    delete_layer(mask_history.size() - 1);
+	delete_last_layer();
+	//delete_layer(mask_history.size() - 1);
     return;
 }
 
 void ImageCanvas::redo() {
+	std::cout << "REDO" << std::endl;
     restore_last_layer();
     return;
 }

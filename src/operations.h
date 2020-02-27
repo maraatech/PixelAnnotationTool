@@ -116,6 +116,10 @@ protected:
 	Mask curr_smart_mask;
 	std::vector<BoundingBox> curr_bbox_list;
 
+	std::vector<Mask> mask_history;
+	std::vector<Mask> smart_mask_history;
+	std::vector<std::vector<BoundingBox>> bbox_list_history;
+
 	std::vector<Operations*> op_list;
 	int _index = 0;
 

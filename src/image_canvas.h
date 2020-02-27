@@ -15,6 +15,11 @@ class MainWindow;
 
 class OperationManager;
 
+struct WindowState {
+	ImageMask mask;
+	std::vector<BoundingBox> bbox_list;
+};
+
 class ImageCanvas : public QLabel {
     Q_OBJECT
 
@@ -116,6 +121,9 @@ private:
     ImageMask _top_mask;
     ImageMask _prev_mask;
     
+	std::vector<WindowState> state_history;
+	std::stack<WindowState> delete_state_history;
+
     int _cid = 0; // Default to first label
 
     int _continous_click = 0;
