@@ -699,26 +699,33 @@ void ImageCanvas::delete_layer(int index)
 
 void ImageCanvas::delete_last_layer()
 {
+  std::cout << "DELETE LAST LAYER" << std::endl;
+  std::cout << "History Size: " << state_history.size() << " Delete State Size: " << delete_state_history.size() << std::endl;
 	if (state_history.size() == 0)
 	{
 		return;
 	}
-
-	clear();
+  clearMask();
+  box_list.clear();
 
 	WindowState last_state = state_history.back();
 	state_history.pop_back();
 	delete_state_history.push(last_state);
 
-	last_state = state_history.back();
+  if (state_history.size() > 0) {
+  	last_state = state_history.back();
 
-	_mask = last_state.mask;
-	box_list = last_state.bbox_list;
+	  _mask = last_state.mask;
+	  box_list = last_state.bbox_list;
+  }
+
+
 
 	std::cout << "DELETE LAST REDRAW" << std::endl;
 	redrawBoundingBox();
 	std::cout << "DELETE LAST UPDATE" << std::endl;
 	update();
+  std::cout << "DELETE LAST FINISH" << std::endl;
 
 
 	
@@ -819,15 +826,21 @@ void ImageCanvas::refresh() {
 
 
 void ImageCanvas::undo() {
-	std::cout << "UNDO" << std::endl;
+	  std::cout << "UNDO" << std::endl;
+  /*0
     auto top_mask_mat = qImage2Mat(_top_mask.id);
     cv::Scalar sum = cv::sum(top_mask_mat);
     if (cv::sum(sum)[0] > 0)
     {
         // Pretty slow
-        //regenerate();
+        auto last_state = state_history.back();
+
+	      _mask = last_state.mask;
+	      box_list = last_state.bbox_list;
+        redrawBoundingBox();
+        update();
         return;
-    }
+    }*/
 	delete_last_layer();
 	//delete_layer(mask_history.size() - 1);
     return;
