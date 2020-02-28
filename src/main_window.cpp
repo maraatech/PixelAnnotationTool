@@ -211,6 +211,7 @@ void MainWindow::setStarAtNameOfTab(bool star) {
     }
 }
 
+
 void MainWindow::updateConnect(const ImageCanvas * ic) {
 	std::cout << "updateConnect*" << std::endl;
     if (ic == NULL) return;

@@ -57,6 +57,7 @@ protected:
     void mouseMoveEvent(QMouseEvent * event) override;
     void mousePressEvent(QMouseEvent * event) override;
     void keyPressEvent(QKeyEvent * event) override;
+    void keyReleaseEvent(QKeyEvent * event) override;
     void wheelEvent(QWheelEvent * event) override;
     void mouseReleaseEvent(QMouseEvent * event) override;
     void paintEvent(QPaintEvent *event) override;
@@ -65,6 +66,7 @@ public slots :
     void scaleChanged(double);
     void alphaChanged(double);
     void setSizePen(int);
+    void toggleAlpha();
     void clearMask();
     void save();
     void smartMask();
@@ -98,6 +100,7 @@ private:
     QScrollArea     *_scroll_parent    ;
     double           _scale            ;
     double           _alpha            ;
+    double           _tmp_alpha        ; 
     QImage           _image            ;
     QImage           _orig_image       ;
     QImage           _buffer_image     ;

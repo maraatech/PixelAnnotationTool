@@ -343,6 +343,19 @@ void ImageCanvas::alphaChanged(double alpha) {
     repaint();
 }
 
+void ImageCanvas::toggleAlpha() {
+    _alpha = _ui->spinbox_alpha->value();
+    std::cout << "TOGGLE ALPHA" << std::endl;
+    if (_tmp_alpha > 0.0) {
+      _alpha = _tmp_alpha;
+      _tmp_alpha = -1.0;
+    } else {
+      _tmp_alpha = _alpha;
+      _alpha = 1.0;
+    }
+    repaint();
+}
+
 void ImageCanvas::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, false);
@@ -659,6 +672,12 @@ void ImageCanvas::keyPressEvent(QKeyEvent * event) {
             clear_box_selection();
         }
     }
+}
+
+void ImageCanvas::keyReleaseEvent(QKeyEvent * event) {
+  if (event->key() == Qt::Key_A) {
+      toggleAlpha();
+  }
 }
 
 //TODO: Optimize
